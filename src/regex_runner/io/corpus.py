@@ -6,14 +6,17 @@ from regex_runner.algo.pattern import Document
 from regex_runner.io import sqlai
 
 
-def get_next_from_directory(directory, directories, version, filenames=None,
+def get_next_from_directory(directory, directories, version=None, filenames=None,
                             encoding='utf8'):
     if directory or directories:
         directories = directories or []
         if directory:
             directories.insert(0, directory)
         for directory in directories:
-            corpus_dir = os.path.join(directory, version)
+            if version:
+                corpus_dir = os.path.join(directory, version)
+            else:
+                corpus_dir = directory
             if filenames:  # only look for specified files
                 for file in filenames:
                     fp = os.path.join(corpus_dir, file)
