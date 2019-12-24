@@ -1,7 +1,6 @@
 import itertools
 import os
 
-
 from runrex.algo.pattern import Document
 from runrex.io import sqlai
 
@@ -61,9 +60,10 @@ def get_next_from_sql(name=None, driver=None, server=None,
 
 def get_next_from_corpus(directory=None, directories=None, version=None,
                          connections=None, skipper=None, start=0, end=None,
-                         filenames=None, encoding='utf8'):
+                         filenames=None, encoding='utf8', ssplit=None):
     """
 
+    :param ssplit: sentence splitting function
     :param filenames:
     :param encoding:
     :param connections:
@@ -77,8 +77,8 @@ def get_next_from_corpus(directory=None, directories=None, version=None,
     """
     i = -1
     for doc_name, path, text in itertools.chain(
-        get_next_from_directory(directory, directories, version, filenames, encoding),
-        get_next_from_connections(*connections or list())
+            get_next_from_directory(directory, directories, version, filenames, encoding),
+            get_next_from_connections(*connections or list())
     ):
         if skipper and doc_name in skipper:
             continue
@@ -89,7 +89,7 @@ def get_next_from_corpus(directory=None, directories=None, version=None,
             break
         if not text and not path:  # one of these required
             continue
-        yield Document(doc_name, file=path, text=text)
+        yield Document(doc_name, file=path, text=text, ssplit=ssplit)
 
 
 class Skipper:

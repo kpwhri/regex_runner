@@ -157,8 +157,11 @@ class MatchCask:
 
 class Sentences:
 
-    def __init__(self, text, matches):
-        self.sentences = [Sentence(x, matches) for x in text.split('\n') if x.strip()]
+    def __init__(self, text, matches, ssplit=None):
+        if ssplit:
+            self.sentences = [Sentence(x, matches) for x in ssplit(text) if x.strip()]
+        else:
+            self.sentences = [Sentence(x, matches) for x in text.split('\n') if x.strip()]
 
     def has_pattern(self, pat, ignore_negation=False):
         for sentence in self.sentences:
@@ -290,7 +293,7 @@ class Section:
 class Document:
     HISTORY_REMOVAL = re.compile(r'HISTORY:.*?(?=[A-Z]+:)')
 
-    def __init__(self, name, file=None, text=None, encoding='utf8'):
+    def __init__(self, name, file=None, text=None, encoding='utf8', ssplit=None):
         """
 
         :param name:
@@ -308,7 +311,7 @@ class Document:
             raise ValueError(f'Missing text for {name}, file: {file}')
         # remove history section
         self.new_text = self._clean_text(self.HISTORY_REMOVAL.sub('\n', self.text))
-        self.sentences = Sentences(self.new_text, self.matches)
+        self.sentences = Sentences(self.new_text, self.matches, ssplit=ssplit)
 
     def _clean_text(self, text):
         """

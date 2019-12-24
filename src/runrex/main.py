@@ -26,7 +26,7 @@ def parse_annotation_files(*configs, data=None):
 
 
 def process(corpus=None, annotation=None, annotations=None, output=None, select=None,
-            algorithms=None, loginfo=None, skipinfo=None, logger=None):
+            algorithms=None, loginfo=None, skipinfo=None, logger=None, ssplit=None):
     """
 
     :param corpus:
@@ -52,7 +52,8 @@ def process(corpus=None, annotation=None, annotations=None, output=None, select=
     with get_file_wrapper(**output) as out, \
             get_logging(**kw(loginfo)) as log, \
             Skipper(**kw(skipinfo)) as skipper:
-        for i, doc in enumerate(get_next_from_corpus(**kw(corpus), **kw(select), skipper=skipper)):
+        for i, doc in enumerate(get_next_from_corpus(**kw(corpus), **kw(select),
+                                                     skipper=skipper, ssplit=ssplit)):
             for name, alg_func in algorithms.items():
                 max_res = None
                 for res in alg_func(doc, truth[doc.name]):
