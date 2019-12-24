@@ -2,7 +2,7 @@ import csv
 import datetime
 import os
 
-from regex_runner.io import sqlai
+from runrex.io import sqlai
 
 
 DATETIME_STR = datetime.datetime.now().strftime('%Y%m%d_%H%M%S')

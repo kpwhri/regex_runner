@@ -2,8 +2,8 @@ import itertools
 import os
 
 
-from regex_runner.algo.pattern import Document
-from regex_runner.io import sqlai
+from runrex.algo.pattern import Document
+from runrex.io import sqlai
 
 
 def get_next_from_directory(directory, directories, version=None, filenames=None,

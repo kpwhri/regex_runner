@@ -1,4 +1,4 @@
-from regex_runner.algo.result import Result
+from runrex.algo.result import Result
 
 
 class Reporter:

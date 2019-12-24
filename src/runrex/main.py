@@ -1,11 +1,11 @@
 import logging
 from collections import defaultdict
 
-from regex_runner.io.corpus import get_next_from_corpus, Skipper
-from regex_runner.io.out import get_file_wrapper, get_logging
-from regex_runner.io.report import Reporter
-from regex_runner.schema import validate_config
-from regex_runner.util import kw
+from runrex.io.corpus import get_next_from_corpus, Skipper
+from runrex.io.out import get_file_wrapper, get_logging
+from runrex.io.report import Reporter
+from runrex.schema import validate_config
+from runrex.util import kw
 
 
 def parse_annotation_file(file=None, data=None):

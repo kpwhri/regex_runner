@@ -1,8 +1,8 @@
 from patterns import burden  # input regular expression
-from regex_runner.algo.pattern import Document
-from regex_runner.algo.result import Status, Result
-from regex_runner.main import process
-from regex_runner.schema import validate_config
+from runrex.algo.pattern import Document
+from runrex.algo.result import Status, Result
+from runrex.main import process
+from runrex.schema import validate_config
 
 
 class CostStatus(Status):
