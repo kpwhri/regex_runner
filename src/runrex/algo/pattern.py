@@ -154,6 +154,12 @@ class MatchCask:
     def __str__(self):
         return str(set(m.group() for m in self.matches))
 
+    def __iter__(self):
+        return iter(self.matches)
+
+    def __getitem__(self, item):
+        return self.matches[item]
+
 
 class Sentences:
 

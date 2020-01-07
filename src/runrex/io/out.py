@@ -1,9 +1,10 @@
+import abc
 import csv
 import datetime
+import json
 import os
 
-from runrex.io import sqlai
-
+from runrex.io import sqlai, formatter
 
 DATETIME_STR = datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
 
@@ -11,7 +12,7 @@ DATETIME_STR = datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
 class NullFileWrapper:
 
     def __init__(self):
-        pass
+        self._header = []
 
     def __enter__(self):
         return self
@@ -19,7 +20,7 @@ class NullFileWrapper:
     def __exit__(self, exc_type, exc_val, exc_tb):
         pass
 
-    def writeline(self, line):
+    def writeline(self, data_func):
         pass
 
 
@@ -32,20 +33,21 @@ class FileWrapper:
         else:
             self.fp = file
         self.fh = None
-        self.header = header or []
+        self._header = header or []
         self.encoding = encoding
 
     def __enter__(self):
         if self.fp:
             self.fh = open(self.fp, 'w', encoding=self.encoding)
-            self.writeline(self.header)
+            self.writeline(self._header)
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         if self.fh:
             self.fh.close()
 
-    def writeline(self, line, sep=None):
+    def writeline(self, data_func, sep=None):
+        line = data_func(self._header).values()
         if sep:
             self.fh.write(sep.join(self.clean_list(line)) + '\n')
         else:
@@ -69,15 +71,16 @@ class CsvFileWrapper(FileWrapper):
         if self.fp:
             self.fh = open(self.fp, 'w', newline='')
             self.writer = csv.writer(self.fh)
-            self.writeline(self.header)
+            self.writeline(self._header)
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         if self.fh:
             self.fh.close()
 
-    def writeline(self, line, **kwargs):
+    def writeline(self, data_func, **kwargs):
         if self.writer:
+            line = data_func(self._header).values()
             self.writer.writerow(self.clean_list(line))
 
 
@@ -90,24 +93,47 @@ class TsvFileWrapper(FileWrapper):
         super().writeline(line, sep=sep)
 
 
+class JsonlWrapper(FileWrapper):
+
+    def __init__(self, file, path=None, header=None, **kwargs):
+        super().__init__(file, path, header, **kwargs)
+
+    def __enter__(self):
+        if self.fp:
+            self.fh = open(self.fp, 'w', encoding=self.encoding)
+        return self
+
+    def writeline(self, data_func, sep=None):
+        d = data_func(self._header)
+        self.fh.write(json.dumps(d) + '\n')
+
+
 class TableWrapper:
 
-    def __init__(self, tablename, driver, server, database, **kwargs):
+    def __init__(self, tablename, driver, server, database, header=None, **kwargs):
+        self._header = header or []
         self.eng = sqlai.get_engine(driver=driver, server=server, database=database)
         self.tablename = f'{tablename}'
 
     def __enter__(self):
-        self.eng.execute(f'create table {self.tablename} '
-                         f'(name varchar(100), algorithm varchar(100), value int, '
-                         f'category varchar(100), date varchar(200), extras varchar(200))')
+        formatter.create_table(self.tablename, self._header, self.eng)
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.eng.dispose()
 
-    def writeline(self, line):
-        self.eng.execute(f"insert into {self.tablename} (name, algorithm, value, category, date, extras) "
-                         f"VALUES ('{line[0]}', '{line[1]}', {line[2]}, '{line[3]}', '{line[4]}', '{line[5]}')")
+    def _quote(self, val):
+        if isinstance(val, (int, float)):
+            return val
+        elif val is None:
+            return 'NULL'
+        else:
+            return str(val)
+
+    def writeline(self, data_func):
+        d = data_func(self._header)
+        self.eng.execute(f"insert into {self.tablename} ({','.join(d.keys())}) "
+                         f"VALUES ({', '.join(self._quote(v) for v in d.values())})")
 
 
 def get_file_wrapper(name=None, kind=None, path=None,
@@ -115,18 +141,35 @@ def get_file_wrapper(name=None, kind=None, path=None,
     if not name:
         return NullFileWrapper()
     name = name.replace('{datetime}', DATETIME_STR)
-    if kind == 'csv':
-        return CsvFileWrapper(name, path, header=['name', 'algorithm', 'value', 'category', 'date', 'extras'])
+    header = ('id', 'name', 'algorithm', 'value', 'category', 'date', 'extras')
+    if kind == 'csv' or name.endswith('.csv'):
+        return CsvFileWrapper(name, path, header=header)
+    elif kind == 'tsv' or name.endswith('.tsv'):
+        return TsvFileWrapper(name, path, header=header)
     elif kind == 'sql':
         return TableWrapper(name, driver, server, database)
+    elif kind == 'jsonl' or name.endswith('.jsonl'):
+        return JsonlWrapper(name, path, header=header)
     else:
         raise ValueError('Unrecognized output file type.')
 
 
-def get_logging(directory='.', ignore=False):
+def get_logging(directory='.', kind='tsv', ignore=False,
+                driver=None, server=None, database=None, **kwargs):
+    header = ('name', 'algorithm', 'status', 'result', 'matches', 'text')
     if ignore:
         return NullFileWrapper()
-    else:
+    elif kind == 'tsv':
         return TsvFileWrapper(path=directory,
-                              file=f'text_{DATETIME_STR}.out',
-                              header=['name', 'algorithm', 'status', 'result', 'matches', 'text'])
+                              file=f'text_{DATETIME_STR}.out.tsv',
+                              header=header)
+    elif kind == 'csv':
+        return CsvFileWrapper(path=directory,
+                              file=f'text_{DATETIME_STR}.out.csv',
+                              header=header)
+    elif kind == 'sql':
+        return TableWrapper(f'text_{DATETIME_STR}_out', driver, server, database)
+    elif kind == 'jsonl':
+        return JsonlWrapper(path=directory, file=f'text_{DATETIME_STR}.out.jsonl', header=header)
+    else:
+        raise ValueError('Unrecognized output file type.')

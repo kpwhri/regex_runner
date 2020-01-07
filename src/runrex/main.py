@@ -2,6 +2,7 @@ import logging
 from collections import defaultdict
 
 from runrex.io.corpus import get_next_from_corpus, Skipper
+from runrex.io.formatter import format_data_as_dict
 from runrex.io.out import get_file_wrapper, get_logging
 from runrex.io.report import Reporter
 from runrex.schema import validate_config
@@ -49,27 +50,28 @@ def process(corpus=None, annotation=None, annotations=None, output=None, select=
     if not algorithms:
         raise ValueError('No algorithms specified!')
     results = {name: Reporter() for name in algorithms}
+    number_id = 0
     with get_file_wrapper(**output) as out, \
             get_logging(**kw(loginfo)) as log, \
             Skipper(**kw(skipinfo)) as skipper:
         for i, doc in enumerate(get_next_from_corpus(**kw(corpus), **kw(select),
                                                      skipper=skipper, ssplit=ssplit)):
-            for name, alg_func in algorithms.items():
+            for alg_name, alg_func in algorithms.items():
                 max_res = None
                 for res in alg_func(doc, truth[doc.name]):
                     if res:
                         logging.debug(f'{i}: {doc.name}: {res}')
-                        out.writeline([doc.name, name, res.result, res.value, res.date, res.extras])
+                        out.writeline(format_data_as_dict(number_id, doc, alg_name, res))
                     elif res.is_skip():  # always skip
                         skipper.add(doc.name)
                         break
-                    log.writeline([doc.name, name, res.value, res.result, doc.matches, res.text])
+                    log.writeline(format_data_as_dict(None, doc, alg_name, res))
                     # only take max
                     if not max_res or res.result > max_res.result:
                         max_res = res
                 else:  # avoid if skipped
                     if max_res is not None:
-                        results[name].update(max_res)
+                        results[alg_name].update(max_res)
                         if max_res.expected is not None:
                             logging.info(f'Validation for {doc.name}: {results}')
     logging.warning(f'Final results: {results}')
@@ -82,6 +84,7 @@ def main(config_file):
 
 if __name__ == '__main__':
     import sys
+
     try:
         main(sys.argv[1])
     except IndexError:
