@@ -1,5 +1,6 @@
 import re
 from copy import copy
+from typing import Tuple
 
 
 class Match:
@@ -25,6 +26,12 @@ class Match:
             return self.match.groups()
         else:
             return tuple(self._groups)
+
+    def start(self, group=0):
+        return self.match.start(group)
+
+    def end(self, group=0):
+        return self.match.end(group)
 
     def __bool__(self):
         return bool(self.match)
@@ -79,26 +86,51 @@ class Pattern:
     def __str__(self):
         return self.text
 
-    def matches(self, text, ignore_negation=False,
-                ignore_requires=False, ignore_requires_all=False):
+    def _confirm_match(self, text, ignore_negation=False,
+                       ignore_requires=False, ignore_requires_all=False):
+        if not ignore_negation:
+            for negate in self.negates:
+                if negate.search(text):
+                    return False
+        if not ignore_requires and self.requires:
+            found = False
+            for require in self.requires:
+                if require.search(text):
+                    found = True
+                    break
+            if not found:
+                return False
+        if not ignore_requires_all:
+            for require in self.requires_all:
+                if not require.search(text):
+                    return False
+        return True
+
+    def finditer(self, text, **kwargs):
+        """Look for all matches
+
+        TODO: allow configuring window, etc.
+
+        :param text:
+        :param kwargs:
+        :return:
+        """
+        for m in self.pattern.finditer(text):
+            if self._confirm_match(text, **kwargs):
+                self.match_count += 1
+                yield Match(m, groups=self._compress_groups(m))
+
+    def matches(self, text, **kwargs):
+        """Look for the first match -- this evaluation is at the sentence level.
+
+        :param text:
+        :param kwargs:
+        :return:
+        """
         m = self.pattern.search(text)
         if m:
-            if not ignore_negation:
-                for negate in self.negates:
-                    if negate.search(text):
-                        return False
-            if not ignore_requires and self.requires:
-                found = False
-                for require in self.requires:
-                    if require.search(text):
-                        found = True
-                        break
-                if not found:
-                    return False
-            if not ignore_requires_all:
-                for require in self.requires_all:
-                    if not require.search(text):
-                        return False
+            if not self._confirm_match(text, **kwargs):
+                return False
             self.match_count += 1
             return Match(m, groups=self._compress_groups(m))
         return False
@@ -161,13 +193,19 @@ class MatchCask:
         return self.matches[item]
 
 
+def default_ssplit(text: str) -> Tuple[str, int, int]:
+    target = '\n'
+    start = 0
+    for m in re.finditer(target, text):
+        yield text[start:m.end()], start, m.end()
+        start = m.end()
+    yield text[start:], start, len(text)
+
+
 class Sentences:
 
-    def __init__(self, text, matches, ssplit=None):
-        if ssplit:
-            self.sentences = [Sentence(x, matches) for x in ssplit(text) if x.strip()]
-        else:
-            self.sentences = [Sentence(x, matches) for x in text.split('\n') if x.strip()]
+    def __init__(self, text, matches=None, ssplit=default_ssplit):
+        self.sentences = [Sentence(s, matches, sidx, eidx) for s, sidx, eidx in ssplit(text) if s.strip()]
 
     def has_pattern(self, pat, ignore_negation=False):
         for sentence in self.sentences:
@@ -190,6 +228,10 @@ class Sentences:
                 return m
         return None
 
+    def get_patterns(self, pat, index=0):
+        for sentence in self.sentences:
+            yield from sentence.get_patterns(pat, index=index)
+
     def __len__(self):
         return len(self.sentences)
 
@@ -202,9 +244,20 @@ class Sentences:
 
 class Sentence:
 
-    def __init__(self, text, mc: MatchCask = None):
+    def __init__(self, text, mc: MatchCask = None, start=0, end=None):
         self.text = text
         self.matches = mc or MatchCask()
+        self.start = start
+        self.end = end if end else len(self.text)
+        self.strip()  # remove extra start/ending characters
+
+    def strip(self):
+        ltext = self.text.lstrip()
+        start_incr = len(self.text) - len(ltext)
+        self.start += start_incr
+        rtext = ltext.rstrip()
+        self.end -= len(self.text) - len(rtext) - start_incr
+        self.text = rtext
 
     def has_pattern(self, pat, ignore_negation=False):
         m = pat.matches(self.text, ignore_negation=ignore_negation)
@@ -226,6 +279,11 @@ class Sentence:
             self.matches.add(m)
             return m.group(index)
         return m
+
+    def get_patterns(self, pat: Pattern, index=0):
+        for m in pat.finditer(self.text):
+            self.matches.add(m)
+            yield m.group(index)
 
 
 class Section:
@@ -299,7 +357,7 @@ class Section:
 class Document:
     HISTORY_REMOVAL = re.compile(r'HISTORY:.*?(?=[A-Z]+:)')
 
-    def __init__(self, name, file=None, text=None, encoding='utf8', ssplit=None):
+    def __init__(self, name, file=None, text=None, encoding='utf8', ssplit=default_ssplit):
         """
 
         :param name:
@@ -452,8 +510,10 @@ class Sections:
     def __init__(self):
         self.sections = {}
 
-    def add(self, name, text):
-        self.sections[name.upper()] = Section([Sentence(x) for x in text.split('\n') if x.strip()])
+    def add(self, name, text, ssplit=default_ssplit):
+        self.sections[name.upper()] = Section(
+            [Sentence(s, start=sidx, end=eidx) for s, sidx, eidx in ssplit(text) if s.strip()]
+        )
 
     def get_sections(self, *names) -> Section:
         sect = Section([])
