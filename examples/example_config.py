@@ -1,13 +1,13 @@
 config = {
     'corpus': {
         'directories': [
-            'input',
+            'input',  # input directory
         ],
     },
-    'output': {
-        'name': 'results_{datetime}',
-        'kind': 'csv',
-        'path': 'out'
+    'output': {  # output file
+        'name': 'results_{datetime}',  # 'datetime' will be auto-filled
+        'kind': 'csv',  # output type
+        'path': 'out'  # output directory
     },
     'select': {
         'start': 0,
@@ -17,4 +17,4 @@ config = {
         'directory': 'log'
     },
 }
-print(config)
+print(config)  # required to load config

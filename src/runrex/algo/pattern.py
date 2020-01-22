@@ -1,6 +1,6 @@
 import re
 from copy import copy
-from typing import Tuple
+from typing import Tuple, List
 
 
 class Match:
@@ -39,14 +39,15 @@ class Match:
 
 class Pattern:
 
-    def __init__(self, pattern, negates=None, requires=None, requires_all=None,
+    def __init__(self, pattern: str, negates: List[str] = None,
+                 requires: List[str] = None, requires_all: List[str] = None,
                  replace_whitespace=r'\W*',
                  capture_length=None, retain_groups=None,
                  flags=re.IGNORECASE):
         """
 
-        :param pattern:
-        :param negates:
+        :param pattern: regular expressions (uncompiled)
+        :param negates: regular expressions (uncompiled)
         :param replace_whitespace:
         :param capture_length: for 'or:d' patterns, this is the number
             of actual capture groups (?:(this)|(that)|(thes))

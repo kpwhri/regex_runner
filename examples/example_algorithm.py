@@ -1,4 +1,4 @@
-from patterns import burden  # input regular expression
+from example_patterns import BURDEN  # input regular expression
 from runrex.algo.pattern import Document
 from runrex.algo.result import Status, Result
 from runrex.main import process
@@ -16,7 +16,7 @@ class CostStatus(Status):
 
 def get_burden(document: Document, expected=None) -> Result:
     for sentence in document:  # there are various ways to iterate through a document
-        if sentence.has_patterns(burden):  # define an algorithm by searching for patterns
+        if sentence.has_patterns(BURDEN):  # define an algorithm by searching for patterns
             yield Result(CostStatus.BURDEN, CostStatus.BURDEN.value, expected, text=sentence.text)
 
 
