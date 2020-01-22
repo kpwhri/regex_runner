@@ -221,12 +221,17 @@ class Sentences:
                 return True
         return has_all
 
-    def get_pattern(self, pat, index=0):
+    def get_pattern(self, pat, index=0, get_indices=False):
+        """
+
+        :param pat:
+        :param index:
+        :param get_indices: if True, return (group, start, end)
+        :return:
+        """
         for sentence in self.sentences:
-            m = sentence.get_pattern(pat, index=index)
-            if m:
-                return m
-        return None
+            if m := sentence.get_pattern(pat, index=index, get_indices=get_indices):
+                return m  # tuple if requested indices
 
     def get_patterns(self, pat, index=0):
         for sentence in self.sentences:
@@ -273,17 +278,32 @@ class Sentence:
                 return True
         return has_all
 
-    def get_pattern(self, pat, index=0):
+    def get_pattern(self, pat, index=0, get_indices=False):
+        """
+
+        :param pat:
+        :param index:
+        :param get_indices: to maintain backward compatibility
+        :return:
+        """
         m = pat.matches(self.text)
         if m:
             self.matches.add(m)
-            return m.group(index)
-        return m
+            if get_indices:
+                return m.group(index), m.start(index) + self.start, m.end(index) + self.start
+            else:
+                return m.group(index)
 
-    def get_patterns(self, pat: Pattern, index=0):
+    def get_patterns(self, pat: Pattern, index=0) -> Tuple[str, int, int]:
+        """
+
+        :param pat:
+        :param index: group index (if using particular regex match group)
+        :return:
+        """
         for m in pat.finditer(self.text):
             self.matches.add(m)
-            yield m.group(index)
+            yield m.group(index), m.start(index), m.end(index)
 
 
 class Section:
@@ -309,12 +329,9 @@ class Section:
             self.matches.add(m)
         return bool(m)
 
-    def get_pattern(self, pat, index=0):
-        m = pat.matches(self.text)
-        if m:
-            self.matches.add(m)
-            return m.group(index)
-        return m
+    def get_pattern(self, pat, index=0, get_indices=False):
+        for sentence in self.sentences:
+            yield from sentence.get_pattern(pat, index=index, get_indices=get_indices)
 
     def has_patterns(self, *pats, has_all=False, ignore_negation=False, get_count=False):
         """

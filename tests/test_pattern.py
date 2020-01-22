@@ -5,9 +5,24 @@ from runrex.algo.pattern import Pattern, Sentence, Sentences
 
 def test_pattern_matches_sentence():
     pat = Pattern('(this|that)')
-    sentence = Sentence(' I want this, or that.\n')
-    match = sentence.get_pattern(pat)
+    sentence = Sentence('\t I want this, or that.\n')
+    match = sentence.get_pattern(pat, get_indices=True)
     assert match is not None
+    s, start, end = match
+    assert s == 'this'
+    assert start == 9
+    assert end == 13
+
+
+def test_pattern_matches_sentences():
+    pat = Pattern('(this|that)')
+    sentences = Sentences(' I want this, or that.\n These and those.')
+    match = sentences.get_pattern(pat, get_indices=True)
+    assert match is not None
+    s, start, end = match
+    assert s == 'this'
+    assert start == 8
+    assert end == 12
 
 
 @pytest.mark.parametrize(('pat', 'sentence', 'n_matches'), [
@@ -15,7 +30,7 @@ def test_pattern_matches_sentence():
 ])
 def test_pattern_finditer_sentence(pat: Pattern, sentence: str, n_matches):
     sentence = Sentence(sentence)
-    matches = list(sentence.get_patterns(pat))
+    matches = list(x[0] for x in sentence.get_patterns(pat))  # text only
     assert len(matches) == n_matches
 
 
