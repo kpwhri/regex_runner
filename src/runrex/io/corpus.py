@@ -25,7 +25,7 @@ def get_next_from_directory(directory, directories, version=None, filenames=None
                     except FileNotFoundError:
                         continue
                     else:
-                        yield '.'.join(file.split('.')[:-1]), None, text
+                        yield '.'.join(file.split('.')[:-1]) or file, None, text
             else:
                 for entry in os.scandir(corpus_dir):
                     doc_name = '.'.join(entry.name.split('.')[:-1])
