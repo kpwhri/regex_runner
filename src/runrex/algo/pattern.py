@@ -393,7 +393,7 @@ class Document:
             raise ValueError(f'Missing text for {name}, file: {file}')
         # remove history section
         self.new_text = self._clean_text(self.HISTORY_REMOVAL.sub('\n', self.text))
-        self.sentences = Sentences(self.new_text, self.matches, ssplit=ssplit)
+        self.sentences = Sentences(self.new_text, self.matches, ssplit=ssplit or default_ssplit)
 
     def _clean_text(self, text):
         """
