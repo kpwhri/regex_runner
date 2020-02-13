@@ -231,7 +231,8 @@ class Sentences:
         :return:
         """
         for sentence in self.sentences:
-            if m := sentence.get_pattern(pat, index=index, get_indices=get_indices):
+            m = sentence.get_pattern(pat, index=index, get_indices=get_indices)
+            if m:
                 return m  # tuple if requested indices
 
     def get_patterns(self, pat, index=0):

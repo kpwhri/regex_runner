@@ -20,7 +20,7 @@ setup(name='runrex',
               [
               ]
       },
-      install_requires=['jsonschema', 'sqlalchemy'],
+      install_requires=['sqlalchemy'],
       package_dir={'': 'src'},
       packages=setuptools.find_packages('src'),
       package_data={},

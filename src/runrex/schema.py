@@ -1,6 +1,9 @@
 import json
 
-import jsonschema
+try:
+    import jsonschema
+except ModuleNotFoundError:
+    jsonschema = None
 try:
     from ruamel import yaml
 except ModuleNotFoundError:
@@ -146,5 +149,6 @@ def get_config(path):
 
 def validate_config(path):
     conf = get_config(path)
-    jsonschema.validate(conf, JSON_SCHEMA)
+    if jsonschema:
+        jsonschema.validate(conf, JSON_SCHEMA)
     return conf
