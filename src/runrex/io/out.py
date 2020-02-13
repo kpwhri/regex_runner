@@ -141,13 +141,13 @@ def get_file_wrapper(name=None, kind=None, path=None,
     name = name.replace('{datetime}', DATETIME_STR)
     header = ('id', 'name', 'algorithm', 'value', 'category', 'date', 'extras')
     if kind == 'csv' or name.endswith('.csv'):
-        return CsvFileWrapper(name, path, header=header)
+        return CsvFileWrapper(name, path, header=header, **kwargs)
     elif kind == 'tsv' or name.endswith('.tsv'):
-        return TsvFileWrapper(name, path, header=header)
+        return TsvFileWrapper(name, path, header=header, **kwargs)
     elif kind == 'sql':
-        return TableWrapper(name, driver, server, database)
+        return TableWrapper(name, driver, server, database, **kwargs)
     elif kind == 'jsonl' or name.endswith('.jsonl'):
-        return JsonlWrapper(name, path, header=header)
+        return JsonlWrapper(name, path, header=header, **kwargs)
     else:
         raise ValueError('Unrecognized output file type.')
 
@@ -160,14 +160,15 @@ def get_logging(directory='.', kind='tsv', ignore=False,
     elif kind == 'tsv':
         return TsvFileWrapper(path=directory,
                               file=f'text_{DATETIME_STR}.out.tsv',
-                              header=header)
+                              header=header, **kwargs)
     elif kind == 'csv':
         return CsvFileWrapper(path=directory,
                               file=f'text_{DATETIME_STR}.out.csv',
-                              header=header)
+                              header=header, **kwargs)
     elif kind == 'sql':
-        return TableWrapper(f'text_{DATETIME_STR}_out', driver, server, database)
+        return TableWrapper(f'text_{DATETIME_STR}_out', driver, server, database, **kwargs)
     elif kind == 'jsonl':
-        return JsonlWrapper(path=directory, file=f'text_{DATETIME_STR}.out.jsonl', header=header)
+        return JsonlWrapper(path=directory, file=f'text_{DATETIME_STR}.out.jsonl',
+                            header=header, **kwargs)
     else:
         raise ValueError('Unrecognized output file type.')

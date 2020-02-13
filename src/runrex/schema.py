@@ -58,6 +58,8 @@ JSON_SCHEMA = {
                 'driver': {'type': 'string'},
                 'server': {'type': 'string'},
                 'database': {'type': 'string'},
+                'ignore': {'type': 'boolean'},
+                'encoding': {'type': 'string'},
             }
         },
         'select': {
@@ -82,7 +84,9 @@ JSON_SCHEMA = {
         'loginfo': {
             'type': 'object',
             'properties': {
-                'directory': {'type': 'string'}
+                'directory': {'type': 'string'},
+                'ignore': {'type': 'boolean'},
+                'encoding': {'type': 'string'},
             }
         },
         'skipinfo': {
