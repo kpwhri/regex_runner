@@ -63,15 +63,16 @@ class FileWrapper:
 
 class CsvFileWrapper(FileWrapper):
 
-    def __init__(self, file, path=None, header=None, **kwargs):
+    def __init__(self, file, path=None, header=None, delimiter=',', **kwargs):
         super().__init__(file, path=path, header=header, **kwargs)
         self.writer = None
+        self.delimiter = delimiter
 
     def __enter__(self):
         if self.fp:
             self.fh = open(self.fp, 'w', newline='')
-            self.writer = csv.writer(self.fh)
-            self.writeline(self._header)
+            self.writer = csv.writer(self.fh, delimiter=self.delimiter)
+            self.writer.writerow(self._header)
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
@@ -84,13 +85,10 @@ class CsvFileWrapper(FileWrapper):
             self.writer.writerow(self.clean_list(line))
 
 
-class TsvFileWrapper(FileWrapper):
+class TsvFileWrapper(CsvFileWrapper):
 
-    def __init__(self, file, path=None, header=None, **kwargs):
-        super().__init__(file, path=path, header=header, **kwargs)
-
-    def writeline(self, line, sep='\t'):
-        super().writeline(line, sep=sep)
+    def __init__(self, file, path=None, header=None, delimiter='\t', **kwargs):
+        super().__init__(file, path=path, header=header, delimiter=delimiter, **kwargs)
 
 
 class JsonlWrapper(FileWrapper):
