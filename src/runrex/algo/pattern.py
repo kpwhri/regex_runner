@@ -46,8 +46,8 @@ class Pattern:
                  flags=re.IGNORECASE):
         """
 
-        :param pattern: regular expressions (uncompiled)
-        :param negates: regular expressions (uncompiled)
+        :param pattern: regular expressions (uncompiled string)
+        :param negates: regular expressions (uncompiled string)
         :param replace_whitespace:
         :param capture_length: for 'or:d' patterns, this is the number
             of actual capture groups (?:(this)|(that)|(thes))

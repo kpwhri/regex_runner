@@ -87,6 +87,7 @@ JSON_SCHEMA = {
                 'directory': {'type': 'string'},
                 'ignore': {'type': 'boolean'},
                 'encoding': {'type': 'string'},
+                'kind': {'type': 'string'},
             }
         },
         'skipinfo': {

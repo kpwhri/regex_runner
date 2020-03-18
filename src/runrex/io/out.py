@@ -152,7 +152,7 @@ def get_file_wrapper(name=None, kind=None, path=None,
         raise ValueError('Unrecognized output file type.')
 
 
-def get_logging(directory='.', kind='tsv', ignore=False,
+def get_logging(directory='.', kind='jsonl', ignore=False,
                 driver=None, server=None, database=None, **kwargs):
     header = ('name', 'algorithm', 'status', 'result', 'matches', 'text')
     if ignore:
