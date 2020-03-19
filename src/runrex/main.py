@@ -62,6 +62,7 @@ def process(corpus=None, annotation=None, annotations=None, output=None, select=
                     if res:
                         logging.debug(f'{i}: {doc.name}: {res}')
                         out.writeline(format_data_as_dict(number_id, doc, alg_name, res))
+                        number_id += 1
                     elif res.is_skip():  # always skip
                         skipper.add(doc.name)
                         break

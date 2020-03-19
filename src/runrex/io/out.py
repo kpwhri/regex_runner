@@ -139,7 +139,7 @@ def get_file_wrapper(name=None, kind=None, path=None,
     if not name:
         return NullFileWrapper()
     name = name.replace('{datetime}', DATETIME_STR)
-    header = ('id', 'name', 'algorithm', 'value', 'category', 'date', 'extras')
+    header = ('id', 'name', 'algorithm', 'value', 'category', 'date', 'start', 'end', 'extras')
     if kind == 'csv' or name.endswith('.csv'):
         return CsvFileWrapper(name, path, header=header, **kwargs)
     elif kind == 'tsv' or name.endswith('.tsv'):

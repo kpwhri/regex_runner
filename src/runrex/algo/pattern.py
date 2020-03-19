@@ -170,6 +170,18 @@ class MatchCask:
     def __init__(self):
         self.matches = []
 
+    @property
+    def start(self):
+        if self.matches:
+            return min(m.start() for m in self.matches)
+        return None
+
+    @property
+    def end(self):
+        if self.matches:
+            return max(m.end() for m in self.matches)
+        return None
+
     def add(self, m):
         self.matches.append(m)
 
@@ -234,9 +246,9 @@ class Sentences:
             if m := sentence.get_pattern(pat, index=index, get_indices=get_indices):
                 return m  # tuple if requested indices
 
-    def get_patterns(self, pat, index=0):
+    def get_patterns(self, *pats: Pattern, index=0):
         for sentence in self.sentences:
-            yield from sentence.get_patterns(pat, index=index)
+            yield from sentence.get_patterns(*pats, index=index)
 
     def __len__(self):
         return len(self.sentences)
@@ -295,16 +307,17 @@ class Sentence:
             else:
                 return m.group(index)
 
-    def get_patterns(self, pat: Pattern, index=0) -> Tuple[str, int, int]:
+    def get_patterns(self, *pats: Pattern, index=0) -> Tuple[str, int, int]:
         """
 
-        :param pat:
+        :param pats:
         :param index: group index (if using particular regex match group)
         :return:
         """
-        for m in pat.finditer(self.text):
-            self.matches.add(m)
-            yield m.group(index), m.start(index), m.end(index)
+        for pat in pats:
+            for m in pat.finditer(self.text):
+                self.matches.add(m)
+                yield m.group(index), m.start(index), m.end(index)
 
 
 class Section:
@@ -324,15 +337,35 @@ class Section:
             for sent in self.sentences:
                 self.matches.add_all(sent.matches.matches)
 
+    @property
+    def match_start(self):
+        return self.matches.start
+
+    @property
+    def match_end(self):
+        return self.matches.end
+
+    @property
+    def start(self):
+        return min(sent.start for sent in self.sentences)
+
+    @property
+    def end(self):
+        return max(sent.end for sent in self.sentences)
+
     def has_pattern(self, pat, ignore_negation=False):
         m = pat.matches(self.text, ignore_negation=ignore_negation)
         if m:
             self.matches.add(m)
         return bool(m)
 
-    def get_pattern(self, pat, index=0, get_indices=False):
+    def get_pattern(self, pat: Pattern, index=0, get_indices=False):
         for sentence in self.sentences:
             yield from sentence.get_pattern(pat, index=index, get_indices=get_indices)
+
+    def get_patterns(self, *pats: Pattern, index=0):
+        for sentence in self.sentences:
+            yield from sentence.get_patterns(*pats, index=index)
 
     def has_patterns(self, *pats, has_all=False, ignore_negation=False, get_count=False):
         """

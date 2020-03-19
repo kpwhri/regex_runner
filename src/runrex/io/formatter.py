@@ -10,6 +10,8 @@ _COLUMNS = {
     'extras': Column('extras', String(200)),
     'matches': Column('matches', Text),
     'text': Column('text', Text),
+    'start': Column('start', Integer),
+    'end': Column('end', Integer),
 }
 
 
@@ -30,6 +32,8 @@ def format_data_as_dict(number, doc, algo_name, res):
         'extras': res.extras,
         'matches': tuple(m.match.string for m in doc.matches),
         'text': res.text,
+        'start': res.start,
+        'end': res.end,
     }
 
     def data_from_columns(columns):
