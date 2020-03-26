@@ -5,9 +5,10 @@ from typing import Tuple, List, Iterable
 
 class Match:
 
-    def __init__(self, match, groups=None):
+    def __init__(self, match, groups=None, offset=0):
         self.match = match
         self._groups = groups
+        self._offset = offset
 
     def group(self, *index):
         if not self._groups or not index or len(index) == 1 and index[0] == 0:
@@ -28,10 +29,10 @@ class Match:
             return tuple(self._groups)
 
     def start(self, group=0):
-        return self.match.start(group)
+        return self.match.start(group) + self._offset
 
     def end(self, group=0):
-        return self.match.end(group)
+        return self.match.end(group) + self._offset
 
     def __bool__(self):
         return bool(self.match)
@@ -107,11 +108,12 @@ class Pattern:
                     return False
         return True
 
-    def finditer(self, text, **kwargs):
+    def finditer(self, text, *, offset=0, **kwargs):
         """Look for all matches
 
         TODO: allow configuring window, etc.
 
+        :param offset:
         :param text:
         :param kwargs:
         :return:
@@ -119,11 +121,12 @@ class Pattern:
         for m in self.pattern.finditer(text):
             if self._confirm_match(text, **kwargs):
                 self.match_count += 1
-                yield Match(m, groups=self._compress_groups(m))
+                yield Match(m, groups=self._compress_groups(m), offset=offset)
 
-    def matches(self, text, **kwargs):
+    def matches(self, text, *, offset=0, **kwargs):
         """Look for the first match -- this evaluation is at the sentence level.
 
+        :param offset:
         :param text:
         :param kwargs:
         :return:
@@ -133,7 +136,7 @@ class Pattern:
             if not self._confirm_match(text, **kwargs):
                 return False
             self.match_count += 1
-            return Match(m, groups=self._compress_groups(m))
+            return Match(m, groups=self._compress_groups(m), offset=offset)
         return False
 
     def _compress_groups(self, m):
@@ -182,7 +185,24 @@ class MatchCask:
             return max(m.end() for m in self.matches)
         return None
 
-    def add(self, m):
+    @property
+    def last_start(self):
+        return self.last.start()
+
+    @property
+    def last_end(self):
+        return self.last.end()
+
+    @property
+    def last_text(self):
+        return self.last.group()
+
+    @property
+    def last(self) -> Match:
+        if self.matches:
+            return self.matches[-1]
+
+    def add(self, m: Match):
         self.matches.append(m)
 
     def add_all(self, matches):
@@ -277,11 +297,11 @@ class Sentence:
         self.end -= len(self.text) - len(rtext) - start_incr
         self.text = rtext
 
-    def has_pattern(self, pat, ignore_negation=False):
-        m = pat.matches(self.text, ignore_negation=ignore_negation)
+    def has_pattern(self, pat: Pattern, ignore_negation=False):
+        m = pat.matches(self.text, ignore_negation=ignore_negation, offset=self.start)
         if m:
             self.matches.add(m)
-        return bool(m)
+        return m
 
     def has_patterns(self, *pats, has_all=False, ignore_negation=False):
         for pat in pats:
@@ -291,7 +311,7 @@ class Sentence:
                 return True
         return has_all
 
-    def get_pattern(self, pat, index=0, get_indices=False):
+    def get_pattern(self, pat: Pattern, index=0, get_indices=False):
         """
 
         :param pat:
@@ -299,7 +319,7 @@ class Sentence:
         :param get_indices: to maintain backward compatibility
         :return:
         """
-        m = pat.matches(self.text)
+        m = pat.matches(self.text, offset=self.start)
         if m:
             self.matches.add(m)
             if get_indices:
@@ -315,14 +335,14 @@ class Sentence:
         :return:
         """
         for pat in pats:
-            for m in pat.finditer(self.text):
+            for m in pat.finditer(self.text, offset=self.start):
                 self.matches.add(m)
                 yield m.group(index), m.start(index), m.end(index)
 
 
 class Section:
 
-    def __init__(self, sentences, mc: MatchCask = None, add_matches=False):
+    def __init__(self, sentences: Iterable[Sentence], mc: MatchCask = None, add_matches=False):
         """
 
         :param sentences:
@@ -330,7 +350,7 @@ class Section:
         :param add_matches: use if you are copying data rather than
             passing around the same match object (default)
         """
-        self.sentences = sentences
+        self.sentences = list(sentences)
         self.text = '\n'.join(sent.text for sent in sentences)
         self.matches = mc or MatchCask()
         if add_matches:
@@ -346,6 +366,10 @@ class Section:
         return self.matches.end
 
     @property
+    def match_text(self):
+        return self.matches.last_text
+
+    @property
     def start(self):
         return min(sent.start for sent in self.sentences)
 
@@ -353,11 +377,12 @@ class Section:
     def end(self):
         return max(sent.end for sent in self.sentences)
 
-    def has_pattern(self, pat, ignore_negation=False):
-        m = pat.matches(self.text, ignore_negation=ignore_negation)
-        if m:
-            self.matches.add(m)
-        return bool(m)
+    def has_pattern(self, pat: Pattern, ignore_negation=False):
+        for sentence in self.sentences:
+            m = sentence.has_pattern(pat, ignore_negation=ignore_negation)
+            if m:
+                self.matches.add(m)
+                return m
 
     def get_pattern(self, pat: Pattern, index=0, get_indices=False):
         for sentence in self.sentences:
