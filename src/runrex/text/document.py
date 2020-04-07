@@ -101,9 +101,9 @@ class Document:
                 return True
         return has_all
 
-    def iter_sentence_by_pattern(self, *pats, negation=None, has_all=False) -> Iterable[Sentence]:
+    def iter_sentence_by_pattern(self, *pats, ignore_negation=None, has_all=False) -> Iterable[Sentence]:
         for sentence in self:
-            if sentence.has_patterns(*pats, negation=negation, has_all=has_all):
+            if sentence.has_patterns(*pats, ignore_negation=ignore_negation, has_all=has_all):
                 yield sentence
 
     def _select_sentence_idx_with_neighbors(self, sentence, i, *pats, negation=None, has_all=False,
@@ -173,3 +173,18 @@ class Document:
     def __iter__(self) -> Sentence:
         for sent in self.sentences:
             yield sent
+
+    def __getitem__(self, item):
+        return self.sentences[item]
+
+    def neighbors(self, index, num_neighbors=1) -> List[Sentence]:
+        """
+        Get sentences with neighbors by sentence index
+        :param index:
+        :param num_neighbors:
+        :return:
+        """
+        return self[max(index + num_neighbors, 0): index + num_neighbors]
+
+    def neighbors_text(self, index, num_neighbors=1, join=' '):
+        return join.join(sent.text for sent in self.neighbors(index, num_neighbors=num_neighbors))
