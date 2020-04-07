@@ -15,14 +15,21 @@ def test_pattern_matches_sentence():
 
 
 def test_pattern_matches_sentences():
-    pat = Pattern('(this|that)')
     sentences = Sentences(' I want this, or that.\n These and those.')
-    match = sentences.get_pattern(pat, get_indices=True)
+    # first sentence
+    match = sentences.get_pattern(Pattern('(this|that)'), get_indices=True)
     assert match is not None
     s, start, end = match
     assert s == 'this'
     assert start == 8
     assert end == 12
+    # second sentence
+    match = sentences.get_pattern(Pattern('(these|those)'), get_indices=True)
+    assert match is not None
+    s, start, end = match
+    assert s == 'These'
+    assert start == 24
+    assert end == 29
 
 
 @pytest.mark.parametrize(('pat', 'sentence', 'n_matches'), [
