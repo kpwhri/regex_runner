@@ -1,7 +1,7 @@
 import itertools
 import os
 
-from runrex.algo.pattern import Document
+from runrex.text.document import Document
 from runrex.io import sqlai
 
 

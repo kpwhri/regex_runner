@@ -1,6 +1,7 @@
 import pytest
 
-from runrex.algo.pattern import default_ssplit, Sentences
+from runrex.text import Sentences
+from runrex.text.ssplit import default_ssplit
 
 
 @pytest.mark.parametrize(('text', 'n_sent', 'exp_indices'), [

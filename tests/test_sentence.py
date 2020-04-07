@@ -1,6 +1,6 @@
 import pytest
 
-from runrex.algo.pattern import Sentence
+from runrex.text import Sentence
 
 
 @pytest.mark.parametrize(('sentence', 'exp_start_idx', 'exp_end_idx'), [

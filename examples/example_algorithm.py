@@ -1,5 +1,5 @@
 from example_patterns import BURDEN  # input regular expression
-from runrex.algo.pattern import Document
+from runrex.text import Document
 from runrex.algo.result import Status, Result
 from runrex.main import process
 from runrex.schema import validate_config
