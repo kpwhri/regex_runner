@@ -1,6 +1,6 @@
 import re
 from copy import copy
-from typing import Tuple, List, Iterable
+from typing import Tuple, Optional, Iterable, List
 
 
 class Match:
@@ -288,8 +288,17 @@ class Sentence:
         self.start = start
         self.end = end if end else len(self.text)
         self.strip()  # remove extra start/ending characters
+        self._last_search_found_pattern = None
+
+    @property
+    def last_found(self):
+        return self._last_search_found_pattern
 
     def strip(self):
+        """
+        Remove begin and end characters, but keep track of new offsets
+        :return:
+        """
         ltext = self.text.lstrip()
         start_incr = len(self.text) - len(ltext)
         self.start += start_incr
@@ -297,8 +306,12 @@ class Sentence:
         self.end -= len(self.text) - len(rtext) - start_incr
         self.text = rtext
 
+    def _update_last_search(self, val: bool):
+        self._last_search_found_pattern = val
+
     def has_pattern(self, pat: Pattern, ignore_negation=False):
         m = pat.matches(self.text, ignore_negation=ignore_negation, offset=self.start)
+        self._update_last_search(bool(m))
         if m:
             self.matches.add(m)
         return m
@@ -306,9 +319,12 @@ class Sentence:
     def has_patterns(self, *pats, has_all=False, ignore_negation=False):
         for pat in pats:
             if has_all and not self.has_pattern(pat, ignore_negation=ignore_negation):
+                self._update_last_search(False)
                 return False
             elif not has_all and self.has_pattern(pat, ignore_negation=ignore_negation):
+                self._update_last_search(True)
                 return True
+        self._update_last_search(has_all)
         return has_all
 
     def get_pattern(self, pat: Pattern, index=0, get_indices=False):
@@ -319,11 +335,12 @@ class Sentence:
         :param get_indices: to maintain backward compatibility
         :return:
         """
-        m = pat.matches(self.text, offset=self.start)
+        m = pat.matches(self.text, offset=self.start)  # incorporate offset information
+        self._update_last_search(bool(m))
         if m:
             self.matches.add(m)
-            if get_indices:
-                return m.group(index), m.start(index) + self.start, m.end(index) + self.start
+            if get_indices:  # offset has already been added in pat.matches
+                return m.group(index), m.start(index), m.end(index)
             else:
                 return m.group(index)
 
@@ -334,10 +351,13 @@ class Sentence:
         :param index: group index (if using particular regex match group)
         :return:
         """
+        found = False
         for pat in pats:
             for m in pat.finditer(self.text, offset=self.start):
+                found = True
                 self.matches.add(m)
                 yield m.group(index), m.start(index), m.end(index)
+        self._update_last_search(found)
 
 
 class Section:
@@ -522,8 +542,32 @@ class Document:
                 return True
         return has_all
 
+    def iter_sentence_by_pattern(self, *pats, negation=None, has_all=False) -> Iterable[Sentence]:
+        for sentence in self:
+            if sentence.has_patterns(*pats, negation=negation, has_all=has_all):
+                yield sentence
+
+    def _select_sentence_idx_with_neighbors(self, sentence, i, *pats, negation=None, has_all=False,
+                                            neighboring_sentences=0) -> Iterable[int]:
+        if sentence.has_patterns(*pats, has_all=has_all):
+            if negation:
+                if sentence.has_patterns(*negation):
+                    return
+            yield i
+            for j in range(neighboring_sentences):
+                if i + j < len(self.sentences):
+                    yield i + j
+                if i - j >= 0:
+                    yield i - j
+
+    def _select_all_sentence_indices(self, sentence, i, *pats, negation=None, has_all=False,
+                                     neighboring_sentences=0) -> List[int]:
+        return sorted([idx for idx in
+                       self._select_sentence_idx_with_neighbors(sentence, i, *pats, negation=negation, has_all=has_all,
+                                                                neighboring_sentences=neighboring_sentences)])
+
     def select_sentences_with_patterns(self, *pats, negation=None, has_all=False,
-                                       neighboring_sentences=0):
+                                       neighboring_sentences=0) -> Iterable[Section]:
         for i, sentence in enumerate(self.sentences):
             sents = set()
             if sentence.has_patterns(*pats, has_all=has_all):
@@ -540,21 +584,12 @@ class Document:
                 yield Section([self.sentences[i] for i in sorted(list(sents))], self.matches)
 
     def select_all_sentences_with_patterns(self, *pats, negation=None, has_all=False, get_range=False,
-                                           neighboring_sentences=0):
-        sents = set()
+                                           neighboring_sentences=0) -> Optional[Section]:
+        sents = []
         for i, sentence in enumerate(self.sentences):
-            if sentence.has_patterns(*pats, has_all=has_all):
-                if negation:
-                    if sentence.has_patterns(*negation):
-                        continue
-                sents.add(i)
-                for j in range(neighboring_sentences):
-                    if i + j < len(self.sentences):
-                        sents.add(i + j)
-                    if i - j >= 0:
-                        sents.add(i - j)
-        sents = sorted(list(sents))
-        if not sents:
+            sents += self._select_all_sentence_indices(sentence, i, *pats, negation=negation, has_all=has_all,
+                                                       neighboring_sentences=neighboring_sentences)
+        if not sents:  # must be sorted
             return None
         elif len(sents) == 1:
             return Section([self.sentences[sents[0]]], self.matches)
