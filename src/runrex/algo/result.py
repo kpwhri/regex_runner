@@ -29,11 +29,11 @@ class Result:
         self.start = start  # index
         self.end = end  # index
         if not extras:
-            self._extras = list()
-        elif isinstance(extras, list):
-            self._extras = extras
+            self._extras = dict()
+        elif isinstance(extras, dict):
+            self._extras = dict(extras)
         else:
-            self._extras = [extras]
+            self._extras = {'extras': extras}
         if self.expected:
             self.correct = self.result == self.expected
 
@@ -43,7 +43,7 @@ class Result:
 
     @property
     def extras(self):
-        return ','.join(x.name if isinstance(x, enum.Enum) else str(x) for x in self._extras)
+        return self._extras
 
     @property
     def text(self):

@@ -96,6 +96,11 @@ To get a local copy up and running follow these simple steps.
 
 Accepts a variety of input formats, but will need to at least specify a `document_id` and `document_text`. The names are configurable.
 
+### Sentence Splitting
+
+By default, the input document text is expected to have each sentence on a separate line. If a sentence splitting scheme is desired, it will need to be supplied to the application. 
+
+### Schema/Examples
 For more details, see the [example config](https://github.com/kpwhri/runrex/blob/master/examples/example_config.py) 
 or consult the [schema](https://github.com/kpwhri/runrex/blob/master/src/runrex/schema.py)
 
