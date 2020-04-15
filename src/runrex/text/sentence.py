@@ -11,11 +11,18 @@ class Sentence:
         self.start = start
         self.end = end if end else len(self.text)
         self.strip()  # remove extra start/ending characters
-        self._last_search_found_pattern = None
+        self._last_search_found_pattern = []
+
+    def reset_found_pattern(self):
+        self._last_search_found_pattern = []
 
     @property
     def last_found(self):
-        return self._last_search_found_pattern
+        return self._last_search_found_pattern[-1]
+
+    @property
+    def any_found(self):
+        return any(self._last_search_found_pattern)
 
     def strip(self):
         """
@@ -30,7 +37,7 @@ class Sentence:
         self.text = rtext
 
     def _update_last_search(self, val: bool):
-        self._last_search_found_pattern = val
+        self._last_search_found_pattern.append(val)
 
     def has_pattern(self, pat: Pattern, ignore_negation=False):
         m = pat.matches(self.text, ignore_negation=ignore_negation, offset=self.start)
