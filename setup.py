@@ -2,7 +2,7 @@ from distutils.core import setup
 import setuptools
 
 setup(name='runrex',
-      version='0.1.0',
+      version='0.1.1',
       description='Library to aid in organizing, running, and debugging regular expressions against'
                   ' a large body of text.',
       url='https://github.com/kpwhri/runrex',
@@ -13,6 +13,7 @@ setup(name='runrex',
           'Intended Audience :: Science/Research',
           'Programming Language :: Python :: 3 :: Only',
           'Topic :: Text Processing :: Linguistic',
+          'License :: OSI Approved :: MIT License',
       ],
       keywords='nlp information extraction',
       entry_points={

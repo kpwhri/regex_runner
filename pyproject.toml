@@ -1,0 +1,26 @@
+[build-system]
+requires = ['flit_core >=2,<4']
+build-backend = 'flit_core.buildapi'
+
+[tool.flit.metadata]
+module = 'runrex'
+author = 'dcronkite'
+author-email = 'dcronkite+pypi@gmail.com'
+home-page = 'https://github.com/dcronkite/runrex'
+requires = ['jsonschema', 'sqlalchemy']
+requires-python = '>=3.8'
+description-file = 'README.md'
+keywords = 'nlp information extraction'
+classifiers = [
+    'Development Status :: 5 - Production/Stable',
+    'Intended Audience :: Science/Research',
+    'Programming Language :: Python :: 3 :: Only',
+    'Topic :: Text Processing :: Linguistic',
+    'License :: OSI Approved :: MIT License',
+]
+
+[tool.flit.metadata.requires-extra]
+db = ['pyodbc']
+dev = ['pytest']
+psql = ['psycopg2']
+sas = ['sas7bdat']
