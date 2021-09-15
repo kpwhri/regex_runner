@@ -1,4 +1,4 @@
-from runrex.algo.pattern import Pattern
+from runrex.algo import Pattern
 from runrex.text.sentence import Sentence
 from runrex.text.ssplit import default_ssplit
 

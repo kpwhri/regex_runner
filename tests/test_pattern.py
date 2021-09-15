@@ -1,6 +1,6 @@
 import pytest
 
-from runrex.algo.pattern import Pattern
+from runrex.algo import Pattern
 from runrex.text import Sentence
 from runrex.text import Sentences
 

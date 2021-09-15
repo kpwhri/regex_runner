@@ -1,7 +1,7 @@
 """
 Useful phrases for negation when building patterns.
 """
-from runrex.algo.pattern import Pattern
+from runrex.algo import Pattern
 
 # date pattern
 years_ago = r'(?:\d+ (?:year|yr|week|wk|month|mon|day)s? (?:ago|before|previous))'
