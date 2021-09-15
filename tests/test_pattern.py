@@ -3,6 +3,7 @@ import pytest
 from runrex.algo import Pattern, Negation
 from runrex.text import Sentence
 from runrex.text import Sentences
+from runrex.text.ssplit import keep_offsets_ssplit
 
 
 def test_pattern_return_negate():
@@ -28,8 +29,9 @@ def test_pattern_matches_sentence():
     assert end == 13
 
 
-def test_pattern_matches_sentences():
-    sentences = Sentences(' I want this, or that.\n These and those.')
+def test_pattern_matches_sentences_keep_offsets():
+    sentences = Sentences(' I want this, or that.\n These and those.',
+                          ssplit=keep_offsets_ssplit)
     # first sentence
     match = sentences.get_pattern(Pattern('(this|that)'), get_indices=True)
     assert match is not None
@@ -44,6 +46,24 @@ def test_pattern_matches_sentences():
     assert s == 'These'
     assert start == 24
     assert end == 29
+
+
+def test_pattern_matches_sentences():
+    sentences = Sentences(' I want this, or that.\n These and those.')
+    # first sentence
+    match = sentences.get_pattern(Pattern('(this|that)'), get_indices=True)
+    assert match is not None
+    s, start, end = match
+    assert s == 'this'
+    assert start == 7
+    assert end == 11
+    # second sentence
+    match = sentences.get_pattern(Pattern('(these|those)'), get_indices=True)
+    assert match is not None
+    s, start, end = match
+    assert s == 'These'
+    assert start == 23
+    assert end == 28
 
 
 @pytest.mark.parametrize(('pat', 'sentence', 'n_matches'), [

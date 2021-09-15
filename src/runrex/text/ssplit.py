@@ -9,21 +9,36 @@ except ImportError:
     syntok_segmenter = False
 
 
+def keep_offsets_ssplit(text: str, delim='\n') -> Tuple[str, int, int]:
+    start = 0
+    for m in re.finditer(delim, text):
+        yield text[start:m.end()], start, m.end()
+        start = m.end()
+    yield text[start:], start, len(text)
+
+
 def regex_ssplit(text: str, *, delim='\n') -> Tuple[str, int, int]:
     start = 0
     for m in re.finditer(delim, text):
-        yield ' '.join(text[start:m.end()].split()), start, m.end()
-        start = m.end()
-    yield ' '.join(text[start:].split()), start, len(text)
+        sentence = ' '.join(text[start:m.end()].split())
+        end = start + len(sentence)
+        yield sentence, start, end
+        start = end
+    sentence = ' '.join(text[start:].split())
+    yield sentence, start, start + len(sentence)
 
 
 def syntok_ssplit(text: str, ignore_newlines=True):
     if ignore_newlines:
         # remove only single newlines, assume multiples are paragraph breaks
         text = ' '.join(re.split(r'(?<!\n)\n(?!\n)', text))
+    start = 0
     for paragraph in syntok_segmenter.analyze(text):
         for sentence in paragraph:
-            yield ' '.join(tok.value for tok in sentence)
+            sentence = ' '.join(tok.value for tok in sentence)
+            end = start + len(sentence)
+            yield sentence, start, end
+            start = end
 
 
 if syntok_segmenter:
