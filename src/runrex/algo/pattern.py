@@ -16,14 +16,16 @@ class Pattern:
                  requires_pre: Iterable[str] = None,
                  requires_post: Iterable[str] = None,
                  requires_all: Iterable[str] = None,
-                 replace_whitespace=r'\W*',
+                 replace_whitespace=r'\W?',
                  capture_length=None, retain_groups=None,
                  flags=re.IGNORECASE):
         """
 
         :param pattern: regular expressions (uncompiled string)
         :param negates: regular expressions (uncompiled string)
-        :param replace_whitespace:
+        :param replace_whitespace: replace whitespace with this value; if using
+            a custom tokenizer that leaves multiple spaces, this should be set to, e.g.,
+            \\W*. This allow more readable regexes
         :param capture_length: for 'or:d' patterns, this is the number
             of actual capture groups (?:(this)|(that)|(thes))
             has capture_length = 1
@@ -115,6 +117,7 @@ class Pattern:
     def matches(self, text, *, offset=0, return_negation=False, **kwargs):
         """Look for the first match -- this evaluation is at the sentence level.
 
+        :param return_negation:
         :param offset:
         :param text:
         :param kwargs:
