@@ -1,8 +1,20 @@
 import pytest
 
-from runrex.algo import Pattern
+from runrex.algo import Pattern, Negation
 from runrex.text import Sentence
 from runrex.text import Sentences
+
+
+def test_pattern_return_negate():
+    m = Pattern('test', negates=[r'\bnot?\b']).matches('do not test this', return_negation=True)
+    assert isinstance(m, Negation)
+    assert m.term_group() == 'not'
+    assert m.match == 'test'
+
+
+def test_pattern_no_return_negate():
+    m = Pattern('test', negates=[r'\bnot?\b']).matches('do not test this')
+    assert m is False
 
 
 def test_pattern_matches_sentence():
