@@ -1,7 +1,7 @@
 import re
 from typing import Iterable, List, Optional
 
-from runrex.algo.pattern import MatchCask
+from runrex.algo import MatchCask
 from runrex.text.section import Section
 from runrex.text.sections import Sections
 from runrex.text.sentence import Sentence

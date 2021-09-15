@@ -1,6 +1,6 @@
 from typing import Tuple
 
-from runrex.algo.pattern import MatchCask, Pattern
+from runrex.algo import MatchCask, Pattern
 
 
 class Sentence:

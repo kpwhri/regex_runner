@@ -1,6 +1,6 @@
 from typing import Iterable
 
-from runrex.algo.pattern import MatchCask, Pattern
+from runrex.algo import MatchCask, Pattern
 from runrex.text.sentence import Sentence
 
 

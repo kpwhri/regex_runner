@@ -1,4 +1,4 @@
-from runrex.algo.pattern import Pattern
+from runrex.algo import Pattern
 
 BURDEN = Pattern('(burden|debt)',
                  negates=['not?'],  # exclude a match
