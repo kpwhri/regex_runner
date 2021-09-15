@@ -1,5 +1,5 @@
 import re
-from typing import Iterable, List, Optional
+from typing import Iterable, List, Optional, Iterator
 
 from runrex.algo import MatchCask
 from runrex.text.section import Section
@@ -170,7 +170,7 @@ class Document:
             sections.add(prev_name, self.text[prev_start:])
         return sections
 
-    def __iter__(self) -> Sentence:
+    def __iter__(self) -> Iterator[Sentence]:
         for sent in self.sentences:
             yield sent
 

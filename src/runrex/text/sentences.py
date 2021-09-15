@@ -1,3 +1,5 @@
+from typing import Iterator
+
 from runrex.algo import Pattern
 from runrex.text.sentence import Sentence
 from runrex.text.ssplit import default_ssplit
@@ -41,7 +43,7 @@ class Sentences:
     def __len__(self):
         return len(self.sentences)
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[Sentence]:
         return iter(self.sentences)
 
     def __getitem__(self, item):

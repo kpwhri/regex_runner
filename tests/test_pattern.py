@@ -9,13 +9,28 @@ from runrex.text.ssplit import keep_offsets_ssplit
 def test_pattern_return_negate():
     m = Pattern('test', negates=[r'\bnot?\b']).matches('do not test this', return_negation=True)
     assert isinstance(m, Negation)
-    assert m.term_group() == 'not'
+    assert m.neg_group() == 'not'
     assert m.match == 'test'
 
 
 def test_pattern_no_return_negate():
     m = Pattern('test', negates=[r'\bnot?\b']).matches('do not test this')
     assert m is False
+
+
+def test_sentence_return_negate():
+    p = Pattern('test', negates=[r'\bnot?\b'])
+    text = Sentence('do not test this').get_pattern(p, return_negation=True)
+    assert text == 'test'
+
+
+def test_sentence_return_negation_keyword():
+    p = Pattern('test', negates=[r'\bnot?\b'])
+    text, neg = Sentence('do not test this').get_pattern(
+        p, return_negation=True, return_negation_keyword=True
+    )
+    assert text == 'test'
+    assert neg == 'not'
 
 
 def test_pattern_matches_sentence():
