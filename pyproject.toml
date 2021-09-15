@@ -7,7 +7,7 @@ module = 'runrex'
 author = 'dcronkite'
 author-email = 'dcronkite+pypi@gmail.com'
 home-page = 'https://github.com/dcronkite/runrex'
-requires = ['jsonschema', 'sqlalchemy']
+requires = ['jsonschema', 'sqlalchemy', 'loguru', 'syntok']
 requires-python = '>=3.8'
 description-file = 'README.md'
 keywords = 'nlp information extraction'
