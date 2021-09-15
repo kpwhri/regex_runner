@@ -77,7 +77,8 @@ class Pattern:
                        ignore_requires=False, ignore_requires_all=False):
         if not ignore_negation:
             for negate, direction in self.negates:
-                if neg_match := negate.search(self._get_text_for_direction(text, direction, match_start, match_end)):
+                neg_match = negate.search(self._get_text_for_direction(text, direction, match_start, match_end))
+                if neg_match:
                     return neg_match if return_negation else False
         if not ignore_requires and self.requires:
             found = False
