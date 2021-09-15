@@ -28,7 +28,7 @@ def regex_ssplit(text: str, *, delim='\n') -> Tuple[str, int, int]:
     yield sentence, start, start + len(sentence)
 
 
-def syntok_ssplit(text: str, ignore_newlines=True):
+def syntok_ssplit(text: str, ignore_newlines=True) -> Tuple[str, int, int]:
     if ignore_newlines:
         # remove only single newlines, assume multiples are paragraph breaks
         text = ' '.join(re.split(r'(?<!\n)\n(?!\n)', text))
