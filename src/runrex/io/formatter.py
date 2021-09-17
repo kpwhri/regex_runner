@@ -30,7 +30,7 @@ def format_data_as_dict(number, doc, algo_name, res):
         'category': res.value,
         'date': res.date,
         'extras': res.extras,
-        'matches': tuple(m.match.string for m in doc.matches),
+        'matches': tuple(m.matchobj.string for m in doc.matches),
         'text': res.text,
         'start': res.start,
         'end': res.end,
