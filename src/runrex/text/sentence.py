@@ -1,6 +1,6 @@
 from typing import Tuple
 
-from runrex.algo import MatchCask, Pattern
+from runrex.algo import MatchCask, Pattern, Negation
 
 
 class Sentence:
@@ -94,5 +94,8 @@ class Sentence:
             for m in pat.finditer(self.text, offset=self.start, return_negation=return_negation):
                 found = True
                 self.matches.add(m)
-                yield m.group(index), m.start(index), m.end(index)
+                if return_negation:
+                    yield m.group(index), m.start(index), m.end(index), isinstance(m, Negation)
+                else:
+                    yield m.group(index), m.start(index), m.end(index)
         self._update_last_search(found)

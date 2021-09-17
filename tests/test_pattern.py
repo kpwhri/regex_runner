@@ -97,3 +97,13 @@ def test_pattern_finditer_sentences(pat: Pattern, text: str, n_matches):
     sentences = Sentences(text)
     matches = list(sentences.get_patterns(pat))
     assert len(matches) == n_matches
+
+
+@pytest.mark.parametrize(('pat', 'text', 'n_matches', 'n_negation'), [
+    (Pattern('(this|that)', negates=['not']), ' I want this, or that.\n\n But not that', 3, 1),
+])
+def test_pattern_finditer_sentences_return_negation(pat: Pattern, text: str, n_matches: int, n_negation: int):
+    sentences = Sentences(text)
+    matches = list(sentences.get_patterns(pat, return_negation=True))
+    assert len(matches) == n_matches
+    assert len([is_neg for _, _, _, is_neg in matches if is_neg]) == n_negation

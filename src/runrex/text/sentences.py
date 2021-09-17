@@ -36,9 +36,9 @@ class Sentences:
             if m := sentence.get_pattern(pat, index=index, get_indices=get_indices):
                 return m  # tuple if requested indices
 
-    def get_patterns(self, *pats: Pattern, index=0):
+    def get_patterns(self, *pats: Pattern, index=0, return_negation=False):
         for sentence in self.sentences:
-            yield from sentence.get_patterns(*pats, index=index)
+            yield from sentence.get_patterns(*pats, index=index, return_negation=return_negation)
 
     def __len__(self):
         return len(self.sentences)
