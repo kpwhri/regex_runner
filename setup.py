@@ -21,7 +21,7 @@ setup(name='runrex',
               [
               ]
       },
-      install_requires=['jsonschema', 'sqlalchemy'],
+      install_requires=['jsonschema', 'sqlalchemy', 'loguru', 'syntok'],
       package_dir={'': 'src'},
       packages=setuptools.find_packages('src'),
       package_data={},
