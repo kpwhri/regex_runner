@@ -32,6 +32,10 @@ class Document:
         self.new_text = self._clean_text(self.HISTORY_REMOVAL.sub('\n', self.text))
         self.sentences = Sentences(self.new_text, self.matches, ssplit=ssplit or default_ssplit)
 
+    @classmethod
+    def clean_text(cls, text):
+        return re.sub(r': *\n', r': ', Document.HISTORY_REMOVAL.sub('\n', text), flags=re.I)
+
     def _clean_text(self, text):
         """
         These algorithms work on a sentence by sentence level, so occasionally need
