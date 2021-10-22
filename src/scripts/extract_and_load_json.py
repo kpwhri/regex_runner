@@ -21,6 +21,7 @@ import os
 import json
 import pathlib
 from collections import Counter
+from functools import lru_cache
 from typing import Tuple
 
 import sqlalchemy as sa
@@ -75,10 +76,14 @@ def update_counter(counter, qualifiers):
     counter[f'other_subject={qualifiers["other_subject"]}'] += 1
 
 
-def get_pytakes_data(data, name, counter):
+def get_pytakes_data(data, name, counter, corpus_path, corpus_suffix):
+    doc_id = data['meta'][0]
     update_counter(counter, data['qualifiers'])
+    text = get_text(corpus_path, doc_id, corpus_suffix)
+    start_idx = int(data['start_index'])
+    end_idx = int(data['end_index'])
     return {
-        'doc_id': data['meta'][0],
+        'doc_id': doc_id,
         'source': name,
         'dict_id': int(data['concept_id']),
         'concept': data['concept'],
@@ -88,67 +93,88 @@ def get_pytakes_data(data, name, counter):
         'hypothetical': data['qualifiers']['hypothetical'],
         'historical': data['qualifiers']['historical'],
         'other_subject': data['qualifiers']['other_subject'],
-        'start_idx': data['start_index'],
-        'end_idx': data['end_index'],
+        'start_idx': start_idx,
+        'end_idx': end_idx,
+        'pre_context': text[max(start_idx - 150, 0): end_idx][-249:] if start_idx else '',
+        'post_context': text[start_idx: end_idx + 150][:249] if start_idx else '',
     }
 
 
-def get_runrex_data(data, name, counter):
+@lru_cache(maxsize=512)
+def get_text(corpus_path, fn, corpus_suffix='', encoding='utf8'):
+    if not corpus_path:
+        return ''
+    fp = os.path.join(corpus_path, fn)
+    if not os.path.exists(fp):
+        fp = f'{fp}{corpus_suffix}'
+    with open(fp, encoding=encoding) as cfh:
+        text = cfh.read()
+    return text
+
+
+def get_runrex_data(data, name, counter, corpus_path, corpus_suffix):
     doc_id = data['name']
     algo = data['algorithm']
     cat = data['category']
     counter[f'{cat}_{algo}'] += 1
     counter[cat] += 1
+    text = get_text(corpus_path, doc_id, corpus_suffix)
+    start_idx = int(data['start'])
+    end_idx = int(data['end'])
     return {
         'doc_id': doc_id,
         'source': name,
         'algorithm': algo,
         'category': cat,
-        'start_idx': data['start'],
-        'end_idx': data['end'],
+        'start_idx': start_idx,
+        'end_idx': end_idx,
+        'pre_context': text[max(start_idx - 150, 0): end_idx][-249:] if start_idx else '',
+        'post_context': text[start_idx: end_idx + 150][:249] if start_idx else '',
     }
 
 
-def get_data(version, data, name, counter):
+def get_data(version, data, name, counter, corpus_path, corpus_suffix):
     if version == 'runrex':
-        return get_runrex_data(data, name, counter)
+        return get_runrex_data(data, name, counter, corpus_path, corpus_suffix)
     elif version == 'pytakes':
-        return get_pytakes_data(data, name, counter)
+        return get_pytakes_data(data, name, counter, corpus_path, corpus_suffix)
     else:
         raise ValueError(f'Expected version: pytakes or runrex, got {version}')
 
 
-def get_pytakes_entry(Entry, data, name, counter):
+def get_pytakes_entry(Entry, data, name, counter, corpus_path, corpus_suffix):
     """Get database entry for pytakes file"""
-    return Entry(**get_pytakes_data(data, name, counter))
+    return Entry(**get_pytakes_data(data, name, counter, corpus_path, corpus_suffix))
 
 
-def get_runrex_entry(Entry, data, name, counter):
+def get_runrex_entry(Entry, data, name, counter, corpus_path, corpus_suffix):
     """Get database entry for runrex file"""
-    return Entry(**get_runrex_data(data, name, counter))
+    return Entry(**get_runrex_data(data, name, counter, corpus_path, corpus_suffix))
 
 
-def get_entry(version, Entry, data, name, counter):
+def get_entry(version, Entry, data, name, counter, corpus_path, corpus_suffix):
     if version == 'runrex':
-        return get_runrex_entry(Entry, data, name, counter)
+        return get_runrex_entry(Entry, data, name, counter, corpus_path, corpus_suffix)
     elif version == 'pytakes':
-        return get_pytakes_entry(Entry, data, name, counter)
+        return get_pytakes_entry(Entry, data, name, counter, corpus_path, corpus_suffix)
     else:
         raise ValueError(f'Expected version: pytakes or runrex, got {version}')
 
 
 def get_csv_header(version):
     if version == 'runrex':
-        return ['doc_id', 'source', 'algorithm', 'category', 'start_idx', 'end_idx']
+        return ['doc_id', 'source', 'algorithm', 'category', 'start_idx', 'end_idx',
+                'pre_context', 'post_context']
     elif version == 'pytakes':
         return ['doc_id', 'source', 'dict_id', 'concept', 'captured',
                 'context', 'certainty', 'hypothetical', 'historical',
-                'other_subject', 'start_idx', 'end_idx']
+                'other_subject', 'start_idx', 'end_idx', 'pre_context',
+                'post_context']
     else:
         raise ValueError(f'Expected version: pytakes or runrex, go {version}')
 
 
-def write_to_file(file: pathlib.Path, version, output_directory=None):
+def write_to_file(file: pathlib.Path, version, output_directory=None, corpus_path=None, corpus_suffix=''):
     name = file.name.split('.')[0]
     if not output_directory:
         output_directory = file.parent
@@ -167,7 +193,7 @@ def write_to_file(file: pathlib.Path, version, output_directory=None):
         with open(file) as fh:
             for i, line in enumerate(fh, start=1):
                 data = json.loads(line)
-                row = get_data(version, data, name, counter)
+                row = get_data(version, data, name, counter, corpus_path, corpus_suffix)
                 writer.writerow(row)
                 doc_ids.add(row['doc_id'])
                 if i % 100 == 0:
@@ -177,16 +203,7 @@ def write_to_file(file: pathlib.Path, version, output_directory=None):
     logger.info('Done')
 
 
-def output_stats(file, n_docs, counter):
-    logger.info(f'Outputting statistics.')
-    with open(f'{file}.stat.txt', 'w') as out:
-        out.write(f'Unique Documents with a hit:\t{n_docs}\n')
-        out.write(f'Other Variables (count):\n')
-        for key, value in sorted(counter.items(), reverse=True):
-            out.write(f'\t{key}\t{value}\n')
-
-
-def write_to_database(file: pathlib.Path, version, connection_string):
+def write_to_database(file: pathlib.Path, version, connection_string, corpus_path=None, corpus_suffix=None):
     """Extract data from jsonl file and upload to database
 
     :param file: fullpath to input jsonl file
@@ -211,7 +228,7 @@ def write_to_database(file: pathlib.Path, version, connection_string):
     with open(file) as fh:
         for i, line in enumerate(fh, start=1):
             data = json.loads(line)
-            e = get_entry(version, Entry, data, name, counter)
+            e = get_entry(version, Entry, data, name, counter, corpus_path, corpus_suffix)
             doc_ids.add(e.doc_id)
             session.add(e)
             session.commit()
@@ -222,13 +239,23 @@ def write_to_database(file: pathlib.Path, version, connection_string):
     logger.info('Done')
 
 
-def main(file: pathlib.Path, version, *, connection_string=None, output_directory=None):
+def output_stats(file, n_docs, counter):
+    logger.info(f'Outputting statistics.')
+    with open(f'{file}.stat.txt', 'w') as out:
+        out.write(f'Unique Documents with a hit:\t{n_docs}\n')
+        out.write(f'Other Variables (count):\n')
+        for key, value in sorted(counter.items(), reverse=True):
+            out.write(f'\t{key}\t{value}\n')
+
+
+def main(file: pathlib.Path, version, *, connection_string=None,
+         output_directory=None, corpus_path=None, corpus_suffix=None):
     if connection_string:
-        write_to_database(file, version, connection_string)
+        write_to_database(file, version, connection_string, corpus_path, corpus_suffix)
         if output_directory:
-            write_to_file(file, version, output_directory)
+            write_to_file(file, version, output_directory, corpus_path, corpus_suffix)
     else:
-        write_to_file(file, version, output_directory)
+        write_to_file(file, version, output_directory, corpus_path, corpus_suffix)
 
 
 if __name__ == '__main__':
@@ -243,7 +270,16 @@ if __name__ == '__main__':
                         help='SQL Alchemy-style connection string.')
     parser.add_argument('--output-directory', dest='output_directory', required=False, type=pathlib.Path,
                         help='Output directory to place extracted files.')
+    parser.add_argument('--corpus-path', dest='corpus_path', default=None, type=pathlib.Path,
+                        help='Path to directory containing corpus files. The filename must match'
+                             ' the `doc_id` value exactly.')
+    parser.add_argument('--corpus-suffix', dest='corpus_suffix', default='',
+                        help='Files in the corpus will be look for under f"{corpus_path}/{doc_id}{corpus_suffix}".')
+
     args = parser.parse_args()
     main(args.file, args.version,
          connection_string=args.connection_string,
-         output_directory=args.output_directory)
+         output_directory=args.output_directory,
+         corpus_path=args.corpus_path,
+         corpus_suffix=args.corpus_suffix,
+         )
