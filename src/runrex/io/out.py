@@ -154,7 +154,7 @@ def get_file_wrapper(name=None, kind=None, path=None,
 
 def get_logging(directory='.', kind='jsonl', ignore=False,
                 driver=None, server=None, database=None, **kwargs):
-    header = ('name', 'algorithm', 'value', 'category', 'matches', 'text')
+    header = ('name', 'algorithm', 'value', 'category', 'matches', 'text', 'start', 'end')
     if ignore:
         return NullFileWrapper()
     elif kind == 'tsv':

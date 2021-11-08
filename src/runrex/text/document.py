@@ -33,7 +33,7 @@ class Document:
         self.sentences = Sentences(self.new_text, self.matches, ssplit=ssplit or default_ssplit)
 
     @classmethod
-    def clean_text(cls, text):
+    def clean_text(cls, text, ssplit=default_ssplit):
         return re.sub(r': *\n', r': ', Document.HISTORY_REMOVAL.sub('\n', text), flags=re.I)
 
     def _clean_text(self, text):

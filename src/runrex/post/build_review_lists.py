@@ -38,8 +38,8 @@ def build_review_lists(output_file: pathlib.Path, log_file: pathlib.Path, metafi
     log_df['match'] = log_df['matches'].apply(lambda x: x[0])
     log_df['matches'] = log_df['matches'].apply(lambda x: ', '.join(set(x)))
     df = pd.merge(mdf, log_df, how='left',
-                  left_on=['doc_id', 'algocat'],
-                  right_on=['name', 'algocat'])[
+                  left_on=['doc_id', 'algocat', 'start', 'end'],
+                  right_on=['name', 'algocat', 'start', 'end'])[
         ['doc_id', 'algocat', 'text', 'term', 'start_idx', 'end_idx', 'match', 'matches']
     ].drop_duplicates()
 
@@ -53,30 +53,19 @@ def build_review_lists(output_file: pathlib.Path, log_file: pathlib.Path, metafi
         for i, r in enumerate(curr_df.itertuples()):
             start = r.start_idx
             end = r.end_idx
-            text = r.text.strip()
-            text = Document.clean_text(text)
+            text = Document.clean_text(r.text)
             term = r.term.strip()
             context = text[max(0, start - offset): end + offset].strip()
-            if term in context:
-                start_idx = context.index(term)
-                end_idx = start_idx + len(term)
-                precontext = text[max(0, start_idx - offset): start_idx].strip()
-                postcontext = text[end_idx + 1: end_idx + offset].strip()
-                count = context.count(term)
-                found = True
-            else:
-                precontext = context
-                postcontext = 'NOT FOUND'
-                found = False
-                count = 0
+            start_idx = context.index(term)
+            end_idx = start_idx + len(term)
+            precontext = text[max(0, start_idx - offset): start_idx].strip()
+            postcontext = text[end_idx + 1: end_idx + offset].strip()
             res.append({
                 'index': i,
-                'found_term': found,
-                'term_count_in_context': count,
+                'doc_id': r.doc_id,
                 'algocat': r.algocat,
-                'term': r.term,
-                'matches': r.match if term in r.match else r.matches,
                 'precontext': precontext,
+                'term': r.term,
                 'postcontext': postcontext,
             })
         out_df = pd.DataFrame(res)

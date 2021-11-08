@@ -4,9 +4,10 @@ from runrex.algo import Match
 
 
 class Negation:
-    def __init__(self, term, match):
+    def __init__(self, term, match, offset=0):
         self._term = term  # negation term
         self._match: Match = match
+        self._match_offset = offset
 
     @property
     def matchobj(self):
@@ -26,10 +27,10 @@ class Negation:
         return self._term.end(group)
 
     def start(self, group=0):
-        return self._match.start(group)
+        return self._match.start(group) + self._match_offset
 
     def end(self, group=0):
-        return self._match.end(group)
+        return self._match.end(group) + self._match_offset
 
     def group(self, *index):
         return self._match.group(*index)
