@@ -35,10 +35,16 @@ def density(name, df, value, is_algo=True, by_date=False, by_extra=False,
                          dtype='float')
     if normalize:
         if by_date:
-            res[name] = res.groupby(['patient_id', 'date'])[kind].sum().reset_index().apply(
-                lambda x: x[kind] / normalize[(x['patient_id'], x['date'])],
-                axis=1
-            )
+            if isinstance(next(normalize.keys()), tuple):
+                res[name] = res.groupby(['patient_id', 'date'])[kind].sum().reset_index().apply(
+                    lambda x: x[kind] / normalize[(x['patient_id'], x['date'])],
+                    axis=1
+                )
+            else:
+                res[name] = res.groupby(['patient_id', 'date'])[kind].sum().reset_index().apply(
+                    lambda x: x[kind] / normalize[x['patient_id']],
+                    axis=1
+                )
             res = res.groupby('patient_id')[name].sum()
         else:
             res[name] = res.groupby('patient_id')[kind].sum().reset_index().apply(
@@ -173,7 +179,7 @@ def build_variables(data_path: pathlib.Path, meta_path: pathlib.Path, extra_cond
     for algorithm in algorithms:
         features.append(density(f'{algorithm}', df, algorithm,
                                 by_date=True,
-                                normalize=patid_date_to_note_count,
+                                normalize=patid_to_text_length,
                                 ))
         features.append(density(f'{algorithm}_all', df, algorithm,
                                 by_date=False,
@@ -182,7 +188,7 @@ def build_variables(data_path: pathlib.Path, meta_path: pathlib.Path, extra_cond
         if extra_condition:
             features.append(density(f'{algorithm}_{extra_condition[:4]}', df, algorithm,
                                     by_date=True,
-                                    normalize=patid_date_to_note_count,
+                                    normalize=patid_to_text_length,
                                     by_extra=extra_condition,
                                     ))
             features.append(density(f'{algorithm}_all_{extra_condition[:4]}', df, algorithm,
@@ -194,17 +200,23 @@ def build_variables(data_path: pathlib.Path, meta_path: pathlib.Path, extra_cond
         features.append(density(f'{category}', df, category,
                                 is_algo=False,
                                 by_date=True,
-                                normalize=patid_date_to_note_count,
+                                normalize=patid_to_text_length,
                                 ))
-        features.append(density(f'{category}_all', df, category, is_algo=False, by_date=False,
+        features.append(density(f'{category}_all', df, category,
+                                is_algo=False,
+                                by_date=False,
                                 normalize=patid_to_text_length))
 
         if extra_condition:
-            features.append(density(f'{category}_{extra_condition[:4]}', df, category, by_date=True,
-                                    normalize=patid_date_to_note_count, by_extra=extra_condition,
+            features.append(density(f'{category}_{extra_condition[:4]}', df, category,
+                                    by_date=True,
+                                    normalize=patid_to_text_length,
+                                    by_extra=extra_condition,
                                     ))
-            features.append(density(f'{category}_all_{extra_condition[:4]}', df, category, by_date=False,
-                                    normalize=patid_to_text_length, by_extra=extra_condition,
+            features.append(density(f'{category}_all_{extra_condition[:4]}', df, category,
+                                    by_date=False,
+                                    normalize=patid_to_text_length,
+                                    by_extra=extra_condition,
                                     ))
     for name, condition in conditions.items():
         features.append(
@@ -215,4 +227,10 @@ def build_variables(data_path: pathlib.Path, meta_path: pathlib.Path, extra_cond
     resdf = pd.DataFrame(features).T.fillna(0.0)
     resdf = resdf.reset_index()
     resdf.rename(columns={'index': 'patient_id'}, inplace=True)
+    resdf = pd.merge(
+        resdf,
+        pd.DataFrame(patid_to_text_length.items(),
+                     columns=['patient_id', 'total_text_length']),
+        on='patient_id',
+    )
     return resdf
