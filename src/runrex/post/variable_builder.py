@@ -35,7 +35,7 @@ def density(name, df, value, is_algo=True, by_date=False, by_extra=False,
                          dtype='float')
     if normalize:
         if by_date:
-            if isinstance(next(normalize.keys()), tuple):
+            if isinstance(next(iter(normalize.keys())), tuple):
                 res[name] = res.groupby(['patient_id', 'date'])[kind].sum().reset_index().apply(
                     lambda x: x[kind] / normalize[(x['patient_id'], x['date'])],
                     axis=1
