@@ -24,6 +24,8 @@ def build_review_lists(output_file: pathlib.Path, log_file: pathlib.Path, metafi
     elif output_file.name.endswith('csv'):
         rr_df = pd.read_csv(output_file)
         rr_df['doc_id'] = rr_df['doc_id'].astype(int)
+        rr_df['start'] = rr_df['start_idx']
+        rr_df['end'] = rr_df['end_idx']
     else:
         raise ValueError(f'Unable to interpret filetype of {output_file}; expected "jsonl" or "csv".')
 
@@ -54,19 +56,13 @@ def build_review_lists(output_file: pathlib.Path, log_file: pathlib.Path, metafi
             start = r.start_idx
             end = r.end_idx
             text = Document.clean_text(r.text)
-            term = r.term.strip()
-            context = text[max(0, start - offset): end + offset].strip()
-            start_idx = context.index(term)
-            end_idx = start_idx + len(term)
-            precontext = text[max(0, start_idx - offset): start_idx].strip()
-            postcontext = text[end_idx + 1: end_idx + offset].strip()
             res.append({
                 'index': i,
                 'doc_id': r.doc_id,
                 'algocat': r.algocat,
-                'precontext': precontext,
-                'term': r.term,
-                'postcontext': postcontext,
+                'precontext': text[max(0, start - offset): start].strip(),
+                'term': r.term.strip(),
+                'postcontext': text[end + 1: end + offset].strip(),
             })
         out_df = pd.DataFrame(res)
         out_df.to_csv(
