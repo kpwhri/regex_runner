@@ -2,7 +2,7 @@ from distutils.core import setup
 import setuptools
 
 setup(name='runrex',
-      version='0.2.0',
+      version='0.3.3',
       description='Library to aid in organizing, running, and debugging regular expressions against'
                   ' a large body of text.',
       url='https://github.com/kpwhri/runrex',
@@ -21,7 +21,7 @@ setup(name='runrex',
               [
               ]
       },
-      install_requires=['jsonschema', 'sqlalchemy'],
+      install_requires=['jsonschema', 'sqlalchemy', 'loguru', 'syntok'],
       package_dir={'': 'src'},
       packages=setuptools.find_packages('src'),
       package_data={},

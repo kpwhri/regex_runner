@@ -1,5 +1,5 @@
 import re
-from typing import Iterable, List, Optional
+from typing import Iterable, List, Optional, Iterator
 
 from runrex.algo import MatchCask
 from runrex.text.section import Section
@@ -31,6 +31,10 @@ class Document:
         # remove history section
         self.new_text = self._clean_text(self.HISTORY_REMOVAL.sub('\n', self.text))
         self.sentences = Sentences(self.new_text, self.matches, ssplit=ssplit or default_ssplit)
+
+    @classmethod
+    def clean_text(cls, text, ssplit=default_ssplit):
+        return re.sub(r': *\n', r': ', Document.HISTORY_REMOVAL.sub('\n', text), flags=re.I)
 
     def _clean_text(self, text):
         """
@@ -170,7 +174,7 @@ class Document:
             sections.add(prev_name, self.text[prev_start:])
         return sections
 
-    def __iter__(self) -> Sentence:
+    def __iter__(self) -> Iterator[Sentence]:
         for sent in self.sentences:
             yield sent
 

@@ -9,13 +9,28 @@ from runrex.text.ssplit import keep_offsets_ssplit
 def test_pattern_return_negate():
     m = Pattern('test', negates=[r'\bnot?\b']).matches('do not test this', return_negation=True)
     assert isinstance(m, Negation)
-    assert m.term_group() == 'not'
+    assert m.neg_group() == 'not'
     assert m.match == 'test'
 
 
 def test_pattern_no_return_negate():
     m = Pattern('test', negates=[r'\bnot?\b']).matches('do not test this')
     assert m is False
+
+
+def test_sentence_return_negate():
+    p = Pattern('test', negates=[r'\bnot?\b'])
+    text = Sentence('do not test this').get_pattern(p, return_negation=True)
+    assert text == 'test'
+
+
+def test_sentence_return_negation_keyword():
+    p = Pattern('test', negates=[r'\bnot?\b'])
+    text, neg = Sentence('do not test this').get_pattern(
+        p, return_negation=True, return_negation_keyword=True
+    )
+    assert text == 'test'
+    assert neg == 'not'
 
 
 def test_pattern_matches_sentence():
@@ -82,3 +97,13 @@ def test_pattern_finditer_sentences(pat: Pattern, text: str, n_matches):
     sentences = Sentences(text)
     matches = list(sentences.get_patterns(pat))
     assert len(matches) == n_matches
+
+
+@pytest.mark.parametrize(('pat', 'text', 'n_matches', 'n_negation'), [
+    (Pattern('(this|that)', negates=['not']), ' I want this, or that.\n\n But not that', 3, 1),
+])
+def test_pattern_finditer_sentences_return_negation(pat: Pattern, text: str, n_matches: int, n_negation: int):
+    sentences = Sentences(text)
+    matches = list(sentences.get_patterns(pat, return_negation=True))
+    assert len(matches) == n_matches
+    assert len([is_neg for _, _, _, is_neg in matches if is_neg]) == n_negation

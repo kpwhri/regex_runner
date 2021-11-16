@@ -107,9 +107,10 @@ class Pattern:
         :return:
         """
         for m in self.pattern.finditer(text):
-            cm = self._confirm_match(text, m.start(), m.end(), return_negation=return_negation, **kwargs)
+            cm = self._confirm_match(text, m.start() + offset, m.end() + offset,
+                                     return_negation=return_negation, **kwargs)
             if not isinstance(cm, bool):
-                yield Negation(cm, m)
+                yield Negation(cm, m, offset=offset)
             elif cm:
                 self.match_count += 1
                 yield Match(m, groups=self._compress_groups(m), offset=offset)

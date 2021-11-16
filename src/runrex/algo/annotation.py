@@ -45,7 +45,7 @@ class Annotation:
         target = negation.group(index) if index else None
         return cls(section.strip() if section else '', sentence_idx, label,
                    negation.start(), negation.end(), negation.group(),
-                   negation=negation.term_group(), gap_text_match=negation.termobj, source_text=source_text,
+                   negation=negation.term_group(), gap_text_match=negation.negationobj, source_text=source_text,
                    target=target)
 
     @property

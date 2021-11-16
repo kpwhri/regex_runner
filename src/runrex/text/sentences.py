@@ -1,3 +1,5 @@
+from typing import Iterator
+
 from runrex.algo import Pattern
 from runrex.text.sentence import Sentence
 from runrex.text.ssplit import default_ssplit
@@ -35,14 +37,14 @@ class Sentences:
             if m:
                 return m  # tuple if requested indices
 
-    def get_patterns(self, *pats: Pattern, index=0):
+    def get_patterns(self, *pats: Pattern, index=0, return_negation=False):
         for sentence in self.sentences:
-            yield from sentence.get_patterns(*pats, index=index)
+            yield from sentence.get_patterns(*pats, index=index, return_negation=return_negation)
 
     def __len__(self):
         return len(self.sentences)
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[Sentence]:
         return iter(self.sentences)
 
     def __getitem__(self, item):

@@ -1,6 +1,6 @@
 from typing import Tuple
 
-from runrex.algo import MatchCask, Pattern
+from runrex.algo import MatchCask, Pattern, Negation
 
 
 class Sentence:
@@ -57,34 +57,45 @@ class Sentence:
         self._update_last_search(has_all)
         return has_all
 
-    def get_pattern(self, pat: Pattern, index=0, get_indices=False):
+    def get_pattern(self, pat: Pattern, *, index=0, get_indices=False, return_negation=False,
+                    return_negation_keyword=False):
         """
 
+        :param return_negation: if True return Negation instance rather than ignoring negation
         :param pat:
         :param index:
         :param get_indices: to maintain backward compatibility
         :return:
         """
-        m = pat.matches(self.text, offset=self.start)  # incorporate offset information
+        # incorporate offset information
+        m = pat.matches(self.text, offset=self.start, return_negation=return_negation)
         self._update_last_search(bool(m))
         if m:
             self.matches.add(m)
             if get_indices:  # offset has already been added in pat.matches
+                if return_negation_keyword:
+                    return m.group(index), m.start(index), m.end(index), m.neg_group()
                 return m.group(index), m.start(index), m.end(index)
+            elif return_negation_keyword:
+                return m.group(index), m.neg_group()
             else:
                 return m.group(index)
 
-    def get_patterns(self, *pats: Pattern, index=0) -> Tuple[str, int, int]:
+    def get_patterns(self, *pats: Pattern, index=0, return_negation=False) -> Tuple[str, int, int]:
         """
 
+        :param return_negation: if True return Negation instance rather than ignoring negation
         :param pats:
         :param index: group index (if using particular regex match group)
         :return:
         """
         found = False
         for pat in pats:
-            for m in pat.finditer(self.text, offset=self.start):
+            for m in pat.finditer(self.text, offset=self.start, return_negation=return_negation):
                 found = True
                 self.matches.add(m)
-                yield m.group(index), m.start(index), m.end(index)
+                if return_negation:
+                    yield m.group(index), m.start(index), m.end(index), isinstance(m, Negation)
+                else:
+                    yield m.group(index), m.start(index), m.end(index)
         self._update_last_search(found)

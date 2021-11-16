@@ -52,9 +52,9 @@ class Section:
         for sentence in self.sentences:
             yield from sentence.get_pattern(pat, index=index, get_indices=get_indices)
 
-    def get_patterns(self, *pats: Pattern, index=0):
+    def get_patterns(self, *pats: Pattern, index=0, return_negation=False):
         for sentence in self.sentences:
-            yield from sentence.get_patterns(*pats, index=index)
+            yield from sentence.get_patterns(*pats, index=index, return_negation=return_negation)
 
     def has_patterns(self, *pats, has_all=False, ignore_negation=False, get_count=False):
         """
