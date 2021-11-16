@@ -23,7 +23,7 @@ possible = r'\b(unlikely|\bposs\b|possib(ly|le|ility)|improbable|potential|susp(
            r'chance|may\b|afraid|concern|tentative|doubt|thought|think)'
 POSSIBLE_PAT = Pattern(possible)
 
-negation = r'(no evidence|without|r/o|rule out|normal|\bnot?\b|\bor\b|denies)'
+negation = r'(no evidence|without|r/o|rule out|normal|\bnot?\b|\bor\b|denies|negative for)'
 historical = r'(history|previous|\bhx\b|\bpast\b|\bprior\b|\bh/o\b)'
 hypothetical = r'(' \
                r'option|possib\w+|desire|want|will|\bcan\b|usual' \
