@@ -2,7 +2,7 @@ from distutils.core import setup
 import setuptools
 
 setup(name='runrex',
-      version='0.3.4',
+      version='0.3.5',
       description='Library to aid in organizing, running, and debugging regular expressions against'
                   ' a large body of text.',
       url='https://github.com/kpwhri/runrex',
