@@ -9,7 +9,7 @@ authors = [
     { name = 'dcronkite', email = 'dcronkite+pypi@gmail.com' }
 ]
 license = { file = 'LICENSE'}
-homepage = 'https://github.com/dcronkite/runrex'
+homepage = 'https://github.com/kpwhri/runrex'
 description = 'Library to aid in organizing, running, and debugging regular expressions against large bodies of text.'
 requires = ['jsonschema', 'sqlalchemy', 'loguru', 'syntok']
 requires-python = '>=3.8'
