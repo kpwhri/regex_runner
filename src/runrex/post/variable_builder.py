@@ -209,11 +209,13 @@ def build_variables(data_path: pathlib.Path, meta_path: pathlib.Path, extra_cond
 
         if extra_condition:
             features.append(density(f'{category}_{extra_condition[:4]}', df, category,
+                                    is_algo=False,
                                     by_date=True,
                                     normalize=patid_to_text_length,
                                     by_extra=extra_condition,
                                     ))
             features.append(density(f'{category}_all_{extra_condition[:4]}', df, category,
+                                    is_algo=False,
                                     by_date=False,
                                     normalize=patid_to_text_length,
                                     by_extra=extra_condition,
