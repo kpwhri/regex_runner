@@ -189,5 +189,5 @@ Please use the [issue tracker](https://github.com/kpwhri/runrex/issues).
 [license-shield]: https://img.shields.io/github/license/kpwhri/runrex.svg?style=flat-square
 [license-url]: https://kpwhri.mit-license.org/
 [linkedin-shield]: https://img.shields.io/badge/-LinkedIn-black.svg?style=flat-square&logo=linkedin&colorB=555
-[linkedin-url]: https://www.linkedin.com/company/kaiser-permanente-washington
+[linkedin-url]: https://www.linkedin.com/company/kaiserpermanentewashingtonresearch
 <!-- [product-screenshot]: images/screenshot.png -->
