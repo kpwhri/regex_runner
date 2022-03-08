@@ -12,7 +12,7 @@ license = { file = 'LICENSE'}
 homepage = 'https://github.com/kpwhri/runrex'
 description = 'Library to aid in organizing, running, and debugging regular expressions against large bodies of text.'
 requires = ['jsonschema', 'sqlalchemy', 'loguru', 'syntok']
-requires-python = '>=3.8'
+requires-python = '>=3.6'
 readme = 'README.md'
 keywords = ['nlp', 'information extraction']
 classifiers = [
