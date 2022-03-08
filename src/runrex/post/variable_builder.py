@@ -169,7 +169,28 @@ def prepare_datasets(data_path, meta_path, extra_condition=None):
     return df, stacked_df, algorithms, categories, patid_to_text_length, patid_date_to_note_count
 
 
-def build_variables(data_path: pathlib.Path, meta_path: pathlib.Path, extra_condition=None, **conditions):
+def _fix_name(label, max_column_length=None, column_name_transformers=None):
+    for target, replacement in column_name_transformers.items():
+        label = label.replace(target, replacement)
+    if max_column_length:
+        suffix_length = 9  # could be 9 extra characters (_all_NNNN)
+        label = label[:max_column_length - suffix_length]
+    return label
+
+
+def build_variables(data_path: pathlib.Path, meta_path: pathlib.Path,
+                    max_column_length=None, column_name_transformers=None,
+                    extra_condition=None, **conditions):
+    """
+
+    :param data_path:
+    :param meta_path:
+    :param max_column_length: ensure no columns are longer than this value; will try to retain important info
+    :param column_name_transformers: dict of abbreviations to embed in names
+    :param extra_condition:
+    :param conditions:
+    :return:
+    """
     (df, stacked_df, algorithms, categories,
      patid_to_text_length, patid_date_to_note_count) = prepare_datasets(
         data_path, meta_path, extra_condition=extra_condition
@@ -177,44 +198,46 @@ def build_variables(data_path: pathlib.Path, meta_path: pathlib.Path, extra_cond
     # create features
     features = []
     for algorithm in algorithms:
-        features.append(density(f'{algorithm}', df, algorithm,
+        algorithm_name = _fix_name(algorithm, max_column_length, column_name_transformers)
+        features.append(density(f'{algorithm_name}', df, algorithm,
                                 by_date=True,
                                 normalize=patid_to_text_length,
                                 ))
-        features.append(density(f'{algorithm}_all', df, algorithm,
+        features.append(density(f'{algorithm_name}_all', df, algorithm,
                                 by_date=False,
                                 normalize=patid_to_text_length,
                                 ))
         if extra_condition:
-            features.append(density(f'{algorithm}_{extra_condition[:4]}', df, algorithm,
+            features.append(density(f'{algorithm_name}_{extra_condition[:4]}', df, algorithm,
                                     by_date=True,
                                     normalize=patid_to_text_length,
                                     by_extra=extra_condition,
                                     ))
-            features.append(density(f'{algorithm}_all_{extra_condition[:4]}', df, algorithm,
+            features.append(density(f'{algorithm_name}_all_{extra_condition[:4]}', df, algorithm,
                                     by_date=False,
                                     normalize=patid_to_text_length,
                                     by_extra=extra_condition,
                                     ))
     for category in categories:
-        features.append(density(f'{category}', df, category,
+        category_name = _fix_name(category, max_column_length, column_name_transformers)
+        features.append(density(f'{category_name}', df, category,
                                 is_algo=False,
                                 by_date=True,
                                 normalize=patid_to_text_length,
                                 ))
-        features.append(density(f'{category}_all', df, category,
+        features.append(density(f'{category_name}_all', df, category,
                                 is_algo=False,
                                 by_date=False,
                                 normalize=patid_to_text_length))
 
         if extra_condition:
-            features.append(density(f'{category}_{extra_condition[:4]}', df, category,
+            features.append(density(f'{category_name}_{extra_condition[:4]}', df, category,
                                     is_algo=False,
                                     by_date=True,
                                     normalize=patid_to_text_length,
                                     by_extra=extra_condition,
                                     ))
-            features.append(density(f'{category}_all_{extra_condition[:4]}', df, category,
+            features.append(density(f'{category_name}_all_{extra_condition[:4]}', df, category,
                                     is_algo=False,
                                     by_date=False,
                                     normalize=patid_to_text_length,
