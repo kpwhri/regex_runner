@@ -1,5 +1,6 @@
 name: Publish Python distribution to PyPI and TestPyPI
 on:
+  workflow_dispatch:
   push:
     tags:
       - '*'
