@@ -1,8 +1,9 @@
+import csv
 import itertools
 import os
 
-from runrex.text.document import Document
 from runrex.io import sqlai
+from runrex.text.document import Document
 
 
 def get_next_from_directory(directory, directories, version=None, filenames=None,
@@ -12,31 +13,48 @@ def get_next_from_directory(directory, directories, version=None, filenames=None
         if directory:
             directories.insert(0, directory)
         for directory in directories:
-            if version:
-                corpus_dir = os.path.join(directory, version)
-            else:
-                corpus_dir = directory
-            if filenames:  # only look for specified files
-                for file in filenames:
-                    fp = os.path.join(corpus_dir, file)
-                    try:
-                        with open(fp, encoding=encoding) as fh:
-                            text = fh.read()
-                    except FileNotFoundError:
-                        continue
-                    else:
-                        yield '.'.join(file.split('.')[:-1]) or file, None, text
-            else:
-                for entry in os.scandir(corpus_dir):
-                    if '.' in entry.name:
-                        doc_name = '.'.join(entry.name.split('.')[:-1])
-                    else:
-                        doc_name = entry.name
-                    with open(entry.path, encoding=encoding) as fh:
-                        text = fh.read()
-                    if not text:
-                        continue
+            if os.path.isdir(directory):
+                yield from _get_next_from_directory(directory, encoding, filenames, version)
+            else:  # is file (e.g., CSV)
+                for doc_name, text in _get_next_from_file(directory, encoding):
                     yield doc_name, None, text
+
+
+def _get_next_from_file(file, name_col='doc_id', text_col='text_col', encoding='utf8'):
+    if file.endswith('.csv'):
+        with open(file, encoding=encoding, newline='') as fh:
+            for row in csv.DictReader(fh):
+                yield row[name_col], row[text_col]
+    else:
+        raise ValueError(f'Unrecognized file type (expected CSV): {file}')
+
+
+def _get_next_from_directory(directory, encoding, filenames, version):
+    if version:
+        corpus_dir = os.path.join(directory, version)
+    else:
+        corpus_dir = directory
+    if filenames:  # only look for specified files
+        for file in filenames:
+            fp = os.path.join(corpus_dir, file)
+            try:
+                with open(fp, encoding=encoding) as fh:
+                    text = fh.read()
+            except FileNotFoundError:
+                continue
+            else:
+                yield '.'.join(file.split('.')[:-1]) or file, None, text
+    else:
+        for entry in os.scandir(corpus_dir):
+            if '.' in entry.name:
+                doc_name = '.'.join(entry.name.split('.')[:-1])
+            else:
+                doc_name = entry.name
+            with open(entry.path, encoding=encoding) as fh:
+                text = fh.read()
+            if not text:
+                continue
+            yield doc_name, None, text
 
 
 def get_next_from_connections(*connections):
@@ -46,7 +64,7 @@ def get_next_from_connections(*connections):
 
 
 def get_next_from_sql(name=None, driver=None, server=None,
-                      database=None, name_col=None, text_col=None):
+                      database=None, name_col=None, text_col=None, encoding='utf8'):
     """
     :param name_col:
     :param text_col:
@@ -59,6 +77,8 @@ def get_next_from_sql(name=None, driver=None, server=None,
         eng = sqlai.get_engine(driver=driver, server=server, database=database)
         for doc_name, text in eng.execute(f'select {name_col}, {text_col} from {name}'):
             yield doc_name, text
+    elif name and not driver and not server and not database:  # this is a directory
+        yield from _get_next_from_file(name, name_col=name_col, text_col=text_col, encoding=encoding)
 
 
 def get_next_from_corpus(directory=None, directories=None, version=None,

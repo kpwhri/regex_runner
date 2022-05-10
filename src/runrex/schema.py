@@ -23,7 +23,8 @@ JSON_SCHEMA = {
                     'items': {
                         'type': 'object',
                         'properties': {
-                            'name': {'type': 'string'},
+                            'name': {'type': 'string'},  # database name; path to CSV file
+                            'encoding': {'type': 'string'},  # for CSV file
                             'driver': {'type': 'string'},
                             'server': {'type': 'string'},
                             'database': {'type': 'string'},
