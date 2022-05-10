@@ -28,7 +28,10 @@ def get_next_from_directory(directory, directories, version=None, filenames=None
                         yield '.'.join(file.split('.')[:-1]) or file, None, text
             else:
                 for entry in os.scandir(corpus_dir):
-                    doc_name = '.'.join(entry.name.split('.')[:-1])
+                    if '.' in entry.name:
+                        doc_name = '.'.join(entry.name.split('.')[:-1])
+                    else:
+                        doc_name = entry.name
                     with open(entry.path, encoding=encoding) as fh:
                         text = fh.read()
                     if not text:
