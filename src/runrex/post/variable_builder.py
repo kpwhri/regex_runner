@@ -170,7 +170,7 @@ def prepare_datasets(data_path, meta_path, extra_condition=None):
 
 
 def _fix_name(label, max_column_length=None, column_name_transformers=None):
-    for target, replacement in column_name_transformers.items():
+    for target, replacement in column_name_transformers.items() if column_name_transformers else []:
         label = label.replace(target, replacement)
     if max_column_length:
         suffix_length = 9  # could be 9 extra characters (_all_NNNN)
