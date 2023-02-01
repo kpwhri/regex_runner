@@ -6,7 +6,8 @@ import json
 from runrex.post.variable_builder import build_variables
 
 
-def create_variable(file, metafile, output_directory=None, extra_condition=None, variable_file=None):
+def create_variable(file, metafile, output_directory=None, extra_condition=None, variable_file=None,
+                    max_col_length=None, transformer_file=None):
     """
 
     :param extra_condition:
@@ -18,11 +19,14 @@ def create_variable(file, metafile, output_directory=None, extra_condition=None,
     """
     with open(variable_file) as fh:
         var_data = json.load(fh)
-    res = build_variables(file, metafile, extra_condition=extra_condition, **var_data)
+    with open(transformer_file) as fh:
+        transformer_data = json.load(fh)
+    res = build_variables(file, metafile, extra_condition=extra_condition, column_name_transformers=transformer_data,
+                          max_col_length=max_col_length, **var_data)
     if not output_directory:
         output_directory = file.parent
     res.to_csv(
-        output_directory / f'variables_{datetime.datetime.now().strftime("%Y%m%d")}_from_{file.name}',
+        output_directory / f'final_variables_{datetime.datetime.now().strftime("%Y%m%d")}_from_{file.name}.csv',
         index=False
     )
 
@@ -43,8 +47,15 @@ def create_variable_cli():
     parser.add_argument('--variable-file', dest='variable_file', required=False, default=None, type=pathlib.Path,
                         help='json file containing dict of variables to build using variable builder syntax'
                              ' (see runrex.post.variable_builder.py for details).')
+    parser.add_argument('--transformer-file', dest='transformer_file', required=False, default=None, type=pathlib.Path,
+                        help='json file containing dict of variable length-reduction {long[str]: short[str]}'
+                             ' (see runrex.post.variable_builder.py for details).')
+    parser.add_argument('--max-col-length', dest='max_col_length', type=int, default=None,
+                        help='Limit column names to this many characters (e.g., for SAS limit to 32.')
     args = parser.parse_args()
     create_variable(args.file, args.metafile,
                     output_directory=args.output_directory,
                     variable_file=args.variable_file,
+                    transformer_file=args.transformer_file,
+                    max_col_length=args.max_col_length,
                     extra_condition=args.extra_condition)
