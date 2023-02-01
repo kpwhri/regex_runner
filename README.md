@@ -77,6 +77,7 @@ To get a local copy up and running follow these simple steps.
 ## Usage
 
 ### Example Implementations
+* [Social Isolation](https://github.com/kpwhri/social-isolation-runrex)
 * [Acute Pancreatitis](https://github.com/kpwhri/apanc-runrex)
 * [Anaphylaxis](https://github.com/kpwhri/anaphylaxis-runrex)
 * [PCOS](https://github.com/kpwhri/pcos-runrex)
