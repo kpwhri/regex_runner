@@ -17,7 +17,7 @@ def keep_offsets_ssplit(text: str, delim='\n') -> Tuple[str, int, int]:
     yield text[start:], start, len(text)
 
 
-def regex_ssplit(text: str, *, delim='\n') -> Tuple[str, int, int]:
+def delim_ssplit(text: str, *, delim='\n') -> Tuple[str, int, int]:
     start = 0
     for m in re.finditer(delim, text):
         sentence = ' '.join(text[start:m.end()].split())
@@ -41,7 +41,25 @@ def syntok_ssplit(text: str, ignore_newlines=True) -> Tuple[str, int, int]:
             start = end
 
 
+def regex_ssplit(text: str, *, delim='\n') -> Tuple[str, int, int]:
+    text = ' '.join(text.split(delim))  # join broken lines
+    sub_pat = re.compile(r'[*•-]')
+    start = 0
+    for m in re.finditer(r'(?<!\w\.\w.)(?<![A-Z][a-z]\.)(?<=\.|\?|\!|\*)\s', text):
+        yield from _subsplit(text[start: m.start()], start, sub_pat)
+        start = m.start()
+    yield from _subsplit(text[start:], start, sub_pat)
+
+
+def _subsplit(sentence: str, start: int, pattern) -> Tuple[str, int, int]:
+    curr_start = 0
+    for sm in pattern.finditer(sentence):
+        yield sentence[curr_start: sm.start()], start + curr_start, start + sm.start()
+        curr_start = sm.start()
+    yield sentence[curr_start:], start + curr_start, start + len(sentence)
+
+
 if syntok_segmenter:
     default_ssplit = syntok_ssplit
 else:
-    default_ssplit = regex_ssplit
+    default_ssplit = delim_ssplit
