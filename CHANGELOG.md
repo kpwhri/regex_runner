@@ -17,6 +17,16 @@ Types of changes:
 
 ## [Unreleased]
 
+## 0.5.0
+
+### Changed
+
+* Fixed issues in `pyproject.toml`
+
+### Removed
+
+* Removed `setup.py` in favor of `pyproject.toml`
+
 ## 0.4.2
 
 ### Fixed

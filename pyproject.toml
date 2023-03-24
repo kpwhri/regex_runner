@@ -1,16 +1,14 @@
 [build-system]
-requires = ['flit_core >=3.2']
+requires = ['flit_core >=3.2,<4']
 build-backend = 'flit_core.buildapi'
 
 [project]
 name = 'runrex'
-version = '0.4.2'
+dynamic = ['version', 'description']
 authors = [
     { name = 'dcronkite', email = 'dcronkite+pypi@gmail.com' }
 ]
-license = { file = 'LICENSE'}
-homepage = 'https://github.com/kpwhri/runrex'
-description = 'Library to aid in organizing, running, and debugging regular expressions against large bodies of text.'
+license = { file = 'LICENSE' }
 requires = ['jsonschema', 'sqlalchemy', 'loguru', 'syntok']
 requires-python = '>=3.8'
 readme = 'README.md'
@@ -30,3 +28,6 @@ psql = ['psycopg2']
 sas = ['sas7bdat']
 tok = ['syntok']
 pandas = ['pandas']
+
+[project.urls]
+Home = 'https://github.com/kpwhri/runrex'
